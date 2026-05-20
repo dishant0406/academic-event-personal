@@ -26,9 +26,44 @@ export default function LoginPage() {
     setLoading(true);
     setTimeout(() => {
       setLoading(false);
-      setToast("✅ Login successful! Redirecting...");
-      setTimeout(() => router.push(`/${role}`), 1000);
-    }, 1500);
+      
+      let isValid = false;
+      let redirectRole = role;
+      const storedUser = localStorage.getItem("currentUser");
+      
+      if (storedUser) {
+        try {
+          const user = JSON.parse(storedUser);
+          if (user.email === email.trim() && user.password === password) {
+            isValid = true;
+            redirectRole = user.role || role;
+          }
+        } catch (e) {}
+      }
+      
+      // Fallback mock accounts matching the database seed
+      const MOCK_DB = [
+        { email: "ashish@iitbhu.ac.in", password: "password123", fullName: "Ashish Kumar", role: "student" },
+        { email: "priya@iitbhu.ac.in", password: "password123", fullName: "Dr. Priya Sharma", role: "faculty" },
+        { email: "ankit@iitbhu.ac.in", password: "password123", fullName: "Ankit Verma", role: "scholar" },
+        { email: "admin@iitbhu.ac.in", password: "admin123", fullName: "System Admin", role: "admin" }
+      ];
+
+      const mockUser = MOCK_DB.find(u => u.email === email.trim() && u.password === password);
+      if (mockUser) {
+        isValid = true;
+        redirectRole = mockUser.role;
+        localStorage.setItem("currentUser", JSON.stringify(mockUser));
+      }
+
+      if (isValid) {
+        setToast("✅ Login successful! Redirecting...");
+        setTimeout(() => router.push(`/${redirectRole}`), 1000);
+      } else {
+        setToast("❌ Invalid email or password. Please try again.");
+        setTimeout(() => setToast(null), 3000);
+      }
+    }, 1200);
   };
 
   return (
@@ -41,7 +76,7 @@ export default function LoginPage() {
         <div className="auth-header">
           <div className="auth-logo" onClick={() => router.push("/")} style={{ cursor: "pointer" }}>
             <div className="logo-icon">⚡</div>
-            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.5rem", fontWeight: 700 }}>
+            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.5rem", fontWeight: 700, textTransform: "uppercase" }}>
               Campus<span style={{ color: "var(--accent-primary)" }}>Buzz</span>
             </span>
           </div>
@@ -56,7 +91,6 @@ export default function LoginPage() {
               key={r.id}
               className={`auth-role-chip ${role === r.id ? "active" : ""}`}
               onClick={() => setRole(r.id)}
-              style={role === r.id ? { borderColor: r.color, background: r.color + "15", color: r.color } : {}}
             >
               <span>{r.icon}</span>
               <span>{r.label}</span>
@@ -96,7 +130,7 @@ export default function LoginPage() {
 
           <button
             className="btn btn-primary btn-lg"
-            style={{ width: "100%", justifyContent: "center", background: selectedRole.color, marginTop: 8 }}
+            style={{ width: "100%", justifyContent: "center", marginTop: 8 }}
             onClick={handleLogin}
             disabled={loading}
           >

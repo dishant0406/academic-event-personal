@@ -20,9 +20,9 @@ const seedDB = async () => {
     // Create users
     const users = await User.create([
       {
-        fullName: "Rahul Sharma", email: "rahul@iitbhu.ac.in", password: "password123",
+        fullName: "ASHISH KUMAR PANIGRAHI", email: "ashish@iitbhu.ac.in", password: "password123",
         role: "student", department: "Computer Science & Engineering",
-        rollNumber: "21CS1045", year: "3rd Year", phone: "+91 98765 43210", isVerified: true,
+        rollNumber: "21CS1045", year: "3rd Year", phone: "+91 7848998206", isVerified: true,
       },
       {
         fullName: "Dr. Priya Sharma", email: "priya@iitbhu.ac.in", password: "password123",
@@ -156,12 +156,48 @@ const seedDB = async () => {
         capacity: 50, registrations: 48, tags: ["LaTeX", "publishing", "tools", "research"],
         color: "#06b6d4", featured: false, status: "approved", createdBy: faculty._id,
       },
+      {
+        title: "Guest Lecture: Advances in Organic Synthesis",
+        description: "Lecture on the recent developments in organic synthesis and catalytic methods.",
+        type: "lecture", department: "Dept. of Chemistry", faculty: "Faculty of Science",
+        date: "2025-08-10", time: "02:00 PM - 04:00 PM",
+        venue: "Chemistry Dept Seminar Hall", speaker: "Dr. Arvind Ramesh",
+        capacity: 100, registrations: 65, tags: ["chemistry", "organic synthesis", "science"],
+        color: "#f59e0b", featured: true, status: "approved", createdBy: faculty._id,
+      },
+      {
+        title: "Conference on South Asian History",
+        description: "An academic conference exploring the social, cultural, and political history of South Asia.",
+        type: "conference", department: "Dept. of History", faculty: "Faculty of Social Sciences",
+        date: "2025-08-15", endDate: "2025-08-17", time: "10:00 AM - 05:00 PM",
+        venue: "Social Sciences Auditorium", speaker: "Various Scholars",
+        capacity: 250, registrations: 120, tags: ["history", "south asia", "culture"],
+        color: "#6366f1", featured: false, status: "approved", createdBy: admin._id,
+      },
+      {
+        title: "Workshop on VLSI Design and Embedded Systems",
+        description: "Comprehensive workshop on VLSI circuit design, layout, and simulation for modern electronics.",
+        type: "workshop", department: "Dept. of Electrical and Electronics Engineering", faculty: "Institute of Technology",
+        date: "2025-09-10", endDate: "2025-09-12", time: "09:00 AM - 05:00 PM",
+        venue: "EEE Department Computer Lab", speaker: "Dr. Sandeep Kumar",
+        capacity: 60, registrations: 45, tags: ["VLSI", "embedded systems", "electronics"],
+        color: "#10b981", featured: true, status: "approved", createdBy: faculty._id,
+      },
+      {
+        title: "Seminar: Next-Generation Smart Grids",
+        description: "Exploring the future of power systems, renewable energy integration, and smart grid technologies.",
+        type: "seminar", department: "Dept. of Electrical and Electronics Engineering", faculty: "Institute of Technology",
+        date: "2025-09-20", time: "02:00 PM - 04:00 PM",
+        venue: "EEE Department Seminar Hall", speaker: "Prof. Rajeev Sharma",
+        capacity: 120, registrations: 85, tags: ["smart grid", "power systems", "renewable energy"],
+        color: "#06b6d4", featured: false, status: "approved", createdBy: admin._id,
+      },
     ]);
 
     console.log(`📅 Created ${events.length} events`);
     console.log("\n✅ Database seeded successfully!");
     console.log("\n📋 Test Credentials:");
-    console.log("   Student:  rahul@iitbhu.ac.in / password123");
+    console.log("   Student:  ashish@iitbhu.ac.in / password123");
     console.log("   Faculty:  priya@iitbhu.ac.in / password123");
     console.log("   Scholar:  ankit@iitbhu.ac.in / password123");
     console.log("   Admin:    admin@iitbhu.ac.in / admin123\n");

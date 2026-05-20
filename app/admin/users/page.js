@@ -1,6 +1,6 @@
 "use client";
 const USERS = [
-  { id: 1, name: "Rahul Sharma", role: "Student", dept: "Computer Science", email: "rahul@iitbhu.ac.in" },
+  { id: 1, name: "Ashish Kumar Panigrahi", role: "Student", dept: "Computer Science", email: "ashish.panigrahi@iitbhu.ac.in" },
   { id: 2, name: "Dr. Priya Sharma", role: "Faculty", dept: "Computer Science", email: "priya@iitbhu.ac.in" },
   { id: 3, name: "Ankit Verma", role: "Scholar", dept: "Physics", email: "ankit@iitbhu.ac.in" },
   { id: 4, name: "Prof. Rajesh Verma", role: "Faculty", dept: "Physics", email: "rajesh@iitbhu.ac.in" },

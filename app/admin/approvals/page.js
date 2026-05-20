@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const PENDING = [
   { id: 101, title: "Workshop on Blockchain for Supply Chain", dept: "Dept. of Computer Science", submittedBy: "Dr. Vikash Gupta", date: "25 Jul 2025", type: "workshop" },
@@ -10,7 +10,26 @@ const PENDING = [
 export default function AdminApprovals() {
   const [pending, setPending] = useState(PENDING);
   const [toast, setToast] = useState(null);
+  
+  useEffect(() => {
+    const localPending = JSON.parse(localStorage.getItem("pendingEvents") || "[]");
+    if (localPending.length > 0) {
+      const formatted = localPending.map(e => ({
+        ...e,
+        date: new Date(e.date).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" })
+      }));
+      setPending([...formatted, ...PENDING]);
+    }
+  }, []);
+
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
+
+  const removePending = (id) => {
+    setPending(p => p.filter(x => x.id !== id));
+    const localPending = JSON.parse(localStorage.getItem("pendingEvents") || "[]");
+    const updatedLocal = localPending.filter(e => e.id !== id);
+    localStorage.setItem("pendingEvents", JSON.stringify(updatedLocal));
+  };
 
   return (
     <>
@@ -28,8 +47,8 @@ export default function AdminApprovals() {
               </div>
               <div style={{ display: "flex", gap: 8 }}>
                 <span className={`event-card-type type-${e.type}`} style={{ position: "static" }}>{e.type}</span>
-                <button className="btn btn-primary btn-sm" style={{ background: "#10b981" }} onClick={() => { setPending(p => p.filter(x => x.id !== e.id)); showToast("✅ Approved!"); }}>Approve</button>
-                <button className="btn btn-ghost btn-sm" style={{ color: "#f43f5e" }} onClick={() => { setPending(p => p.filter(x => x.id !== e.id)); showToast("❌ Rejected"); }}>Reject</button>
+                <button className="btn btn-primary btn-sm" style={{ background: "#10b981" }} onClick={() => { removePending(e.id); showToast("✅ Approved!"); }}>Approve</button>
+                <button className="btn btn-ghost btn-sm" style={{ color: "#f43f5e" }} onClick={() => { removePending(e.id); showToast("❌ Rejected"); }}>Reject</button>
               </div>
             </div>
           ))}

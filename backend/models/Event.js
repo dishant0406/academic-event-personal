@@ -79,7 +79,17 @@ const eventSchema = new mongoose.Schema(
   }
 );
 
-// Index for search
+// ─── Indexes ──────────────────────────────────────────────────────────────
+// Full-text search on title, description, tags
 eventSchema.index({ title: "text", description: "text", tags: "text" });
+
+// Compound indexes matching the most common filter combinations
+// (status is almost always in the query, so it leads every compound index)
+eventSchema.index({ status: 1, date: 1 });             // default listing
+eventSchema.index({ status: 1, type: 1, date: 1 });    // filtered by type
+eventSchema.index({ status: 1, department: 1, date: 1 }); // filtered by dept
+eventSchema.index({ status: 1, featured: 1, date: 1 }); // featured events
+eventSchema.index({ createdBy: 1, status: 1 });        // my events (faculty)
+
 
 module.exports = mongoose.model("Event", eventSchema);

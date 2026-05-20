@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EVENTS, DEPARTMENTS } from "@/lib/data";
 
 function fmtDate(d) {
@@ -26,15 +26,34 @@ export default function AdminDashboard() {
   const [pending, setPending] = useState(PENDING_EVENTS);
   const [toast, setToast] = useState(null);
   const [featured, setFeatured] = useState(new Set(EVENTS.filter(e => e.featured).map(e => e.id)));
+  const [user, setUser] = useState(null);
+  
+  useEffect(() => {
+    // Load events created in the faculty dashboard mock
+    const localPending = JSON.parse(localStorage.getItem("pendingEvents") || "[]");
+    if (localPending.length > 0) {
+      setPending([...localPending, ...PENDING_EVENTS]);
+    }
+    const stored = localStorage.getItem("currentUser");
+    if (stored) setUser(JSON.parse(stored));
+  }, []);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
-  const approveEvent = (id) => {
+  const removePending = (id) => {
     setPending(prev => prev.filter(e => e.id !== id));
+    // Also remove from localStorage if it's there
+    const localPending = JSON.parse(localStorage.getItem("pendingEvents") || "[]");
+    const updatedLocal = localPending.filter(e => e.id !== id);
+    localStorage.setItem("pendingEvents", JSON.stringify(updatedLocal));
+  };
+
+  const approveEvent = (id) => {
+    removePending(id);
     showToast("✅ Event approved and published!");
   };
   const rejectEvent = (id) => {
-    setPending(prev => prev.filter(e => e.id !== id));
+    removePending(id);
     showToast("❌ Event rejected");
   };
   const toggleFeatured = (id) => {
@@ -47,13 +66,13 @@ export default function AdminDashboard() {
   return (
     <>
       <div className="dashboard-header">
-        <h1>Admin Dashboard 🛡️</h1>
+        <h1>Welcome back, {user ? user.fullName.split(" ")[0] : "Admin"}! 🛡️</h1>
         <p>University-wide event management and analytics</p>
       </div>
 
       <div className="tabs" style={{ marginBottom: 28 }}>
         {["overview", "approvals", "all events", "users", "featured"].map(t => (
-          <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)} style={tab === t ? { background: "#f59e0b", color: "#1a1a1a" } : {}}>
+          <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
             {t === "approvals" && pending.length > 0 && (
               <span style={{ marginLeft: 6, background: "var(--accent-rose)", color: "white", borderRadius: 50, padding: "1px 7px", fontSize: "0.7rem" }}>{pending.length}</span>

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EVENTS, EVENT_TYPES, DEPARTMENTS } from "@/lib/data";
 
 function fmtDate(d) {
@@ -8,14 +8,20 @@ function fmtDate(d) {
 
 const MY_EVENTS = EVENTS.filter(e => [1, 2, 4, 9].includes(e.id)).map(e => ({
   ...e,
-  views: Math.floor(Math.random() * 800) + 200,
-  clickRate: (Math.random() * 20 + 10).toFixed(1),
+  views: (e.id * 123) % 800 + 200,
+  clickRate: ((e.id * 7) % 20 + 10).toFixed(1),
 }));
 
 export default function FacultyDashboard() {
   const [tab, setTab] = useState("dashboard");
   const [toast, setToast] = useState(null);
+  const [user, setUser] = useState(null);
   const [form, setForm] = useState({ title: "", description: "", type: "seminar", department: DEPARTMENTS[1], date: "", endDate: "", time: "", venue: "", speaker: "", tags: "" });
+
+  useEffect(() => {
+    const stored = localStorage.getItem("currentUser");
+    if (stored) setUser(JSON.parse(stored));
+  }, []);
 
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
@@ -26,13 +32,13 @@ export default function FacultyDashboard() {
   return (
     <>
       <div className="dashboard-header">
-        <h1>Faculty Dashboard 👨‍🏫</h1>
+        <h1>Welcome back, {user ? user.fullName.split(" ")[0] : "Faculty"}! 👨‍🏫</h1>
         <p>Manage your events and track engagement</p>
       </div>
 
       <div className="tabs" style={{ marginBottom: 28 }}>
         {["dashboard", "create", "my events"].map(t => (
-          <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)} style={tab === t ? { background: "#10b981" } : {}}>
+          <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}
@@ -158,7 +164,24 @@ export default function FacultyDashboard() {
             <input className="form-input" placeholder="e.g. AI, machine learning, workshop" value={form.tags} onChange={e => set("tags", e.target.value)} />
           </div>
           <button className="btn btn-primary btn-lg" style={{ width: "100%", justifyContent: "center", background: "#10b981" }}
-            onClick={() => { if (!form.title || !form.date) return showToast("⚠️ Fill required fields"); showToast("✅ Event submitted for admin review!"); }}>
+            onClick={() => { 
+              if (!form.title || !form.date) return showToast("⚠️ Fill required fields"); 
+              
+              // Save to localStorage so Admin page can see it
+              const newEvent = {
+                id: Date.now(),
+                title: form.title,
+                dept: form.department,
+                submittedBy: "Dr. Priya Sharma", // Mock faculty name
+                date: form.date,
+                type: form.type
+              };
+              const existing = JSON.parse(localStorage.getItem("pendingEvents") || "[]");
+              localStorage.setItem("pendingEvents", JSON.stringify([...existing, newEvent]));
+              
+              setForm({ title: "", description: "", type: "seminar", department: DEPARTMENTS[1], date: "", endDate: "", time: "", venue: "", speaker: "", tags: "" });
+              showToast("✅ Event submitted for admin review!"); 
+            }}>
             Submit for Review →
           </button>
         </div>

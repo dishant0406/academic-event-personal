@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { EVENTS, EVENT_TYPES } from "@/lib/data";
 
 function fmtDate(d) {
@@ -13,6 +13,17 @@ export default function StudentDashboard() {
   const [registered, setRegistered] = useState(new Set([2, 5]));
   const [selectedEvent, setSelectedEvent] = useState(null);
   const [toast, setToast] = useState(null);
+  const [user, setUser] = useState({ fullName: "Ashish Kumar Panigrahi" });
+
+  useEffect(() => {
+    const stored = localStorage.getItem("currentUser");
+    if (stored) {
+      try {
+        const parsed = JSON.parse(stored);
+        if (parsed.fullName) setUser(parsed);
+      } catch (e) {}
+    }
+  }, []);
 
   const toggleBookmark = (id) => {
     setBookmarks(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -29,7 +40,7 @@ export default function StudentDashboard() {
   return (
     <>
       <div className="dashboard-header">
-        <h1>Welcome back, Rahul! 👋</h1>
+        <h1>Welcome back, {user.fullName.split(" ")[0]}! 👋</h1>
         <p>Here&apos;s what&apos;s happening on campus today</p>
       </div>
 

@@ -1,5 +1,5 @@
 "use client";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { EVENTS, DEPARTMENTS } from "@/lib/data";
 
 function fmtDate(d) {
@@ -21,6 +21,12 @@ export default function ScholarDashboard() {
   const [speaker, setSpeaker] = useState("");
   const [tab, setTab] = useState("feed");
   const [saved, setSaved] = useState(new Set([4, 5, 10]));
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    const stored = localStorage.getItem("currentUser");
+    if (stored) setUser(JSON.parse(stored));
+  }, []);
 
   const toggleSave = (id) => {
     setSaved(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
@@ -41,7 +47,7 @@ export default function ScholarDashboard() {
   return (
     <>
       <div className="dashboard-header">
-        <h1>Research Scholar Hub 🔬</h1>
+        <h1>Welcome back, {user ? user.fullName.split(" ")[0] : "Scholar"}! 🔬</h1>
         <p>Discover research events across all departments and domains</p>
       </div>
 
@@ -66,7 +72,7 @@ export default function ScholarDashboard() {
 
       <div className="tabs" style={{ marginBottom: 28 }}>
         {["feed", "advanced search", "cross-department", "recordings"].map(t => (
-          <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)} style={tab === t ? { background: "#8b5cf6" } : {}}>
+          <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
         ))}

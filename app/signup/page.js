@@ -23,7 +23,7 @@ export default function SignupPage() {
   const [role, setRole] = useState("");
   const [form, setForm] = useState({
     fullName: "", email: "", password: "", confirmPassword: "",
-    department: DEPARTMENTS[0], rollNumber: "", year: "1st Year",
+    department: DEPARTMENTS[0], rollNumber: "", year: "B.Tech 1st Year",
     designation: "", facultyId: "", researchDomain: "", supervisor: "",
     adminCode: "", phone: ""
   });
@@ -50,6 +50,7 @@ export default function SignupPage() {
 
     setLoading(true);
     setTimeout(() => {
+      localStorage.setItem("currentUser", JSON.stringify({ ...form, role }));
       setLoading(false);
       setSuccess(true);
     }, 2000);
@@ -71,7 +72,7 @@ export default function SignupPage() {
               : "Your account has been created. You can now sign in and start discovering events."}
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
-            <button className="btn btn-primary btn-lg" style={{ background: selectedRole?.color }} onClick={() => router.push("/login")}>
+            <button className="btn btn-primary btn-lg" onClick={() => router.push("/login")}>
               Sign In Now →
             </button>
             <button className="btn btn-secondary btn-lg" onClick={() => router.push("/")}>
@@ -91,7 +92,7 @@ export default function SignupPage() {
         <div className="auth-header">
           <div className="auth-logo" onClick={() => router.push("/")} style={{ cursor: "pointer" }}>
             <div className="logo-icon">⚡</div>
-            <span style={{ fontFamily: "'Playfair Display', serif", fontSize: "1.5rem", fontWeight: 700 }}>
+            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.5rem", fontWeight: 700, textTransform: "uppercase" }}>
               Campus<span style={{ color: "var(--accent-primary)" }}>Buzz</span>
             </span>
           </div>
@@ -120,10 +121,8 @@ export default function SignupPage() {
                 key={r.id}
                 className="auth-role-card"
                 onClick={() => handleSelectRole(r.id)}
-                onMouseEnter={e => e.currentTarget.style.borderColor = r.color + "66"}
-                onMouseLeave={e => e.currentTarget.style.borderColor = "var(--border)"}
               >
-                <div className="auth-role-card-icon" style={{ background: r.color + "18" }}>{r.icon}</div>
+                <div className="auth-role-card-icon">{r.icon}</div>
                 <h3 style={{ fontFamily: "Inter,sans-serif", fontSize: "1rem", fontWeight: 700 }}>{r.label}</h3>
                 <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontFamily: "Inter,sans-serif" }}>{r.desc}</p>
               </div>
@@ -169,7 +168,7 @@ export default function SignupPage() {
                 <div className="form-group">
                   <label className="form-label">Year</label>
                   <select className="form-select" value={form.year} onChange={e => set("year", e.target.value)}>
-                    {["1st Year", "2nd Year", "3rd Year", "4th Year", "5th Year", "M.Tech 1st Year", "M.Tech 2nd Year"].map(y => <option key={y}>{y}</option>)}
+                    {["B.Tech 1st Year", "B.Tech 2nd Year", "B.Tech 3rd Year", "B.Tech 4th Year", "M.Tech 1st Year", "M.Tech 2nd Year", "Ph.D 1st Year", "Ph.D 2nd Year", "Ph.D 3rd Year", "Ph.D 4th Year", "Ph.D 5th Year+"].map(y => <option key={y}>{y}</option>)}
                   </select>
                 </div>
               </div>
@@ -234,7 +233,7 @@ export default function SignupPage() {
               </button>
               <button
                 className="btn btn-primary btn-lg"
-                style={{ flex: 1, justifyContent: "center", background: selectedRole?.color }}
+                style={{ flex: 1, justifyContent: "center" }}
                 onClick={handleSubmit}
                 disabled={loading}
               >

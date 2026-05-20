@@ -1,11 +1,16 @@
 const express = require("express");
+const mongoose = require("mongoose");
 const User = require("../models/User");
-const { generateToken, protect } = require("../middleware/auth");
+const { generateToken, protect, invalidateUserCache } = require("../middleware/auth");
 
 const router = express.Router();
 
-// ===================== SIGNUP =====================
+// ─── Shared user projection — never expose password / adminCode ────────────
+const USER_PUBLIC_FIELDS = "fullName email role department phone rollNumber year designation facultyId researchDomain supervisor interests avatar createdAt";
+
+// ═══════════════════════════════════════════════════════════════════════════
 // POST /api/auth/signup
+// ═══════════════════════════════════════════════════════════════════════════
 router.post("/signup", async (req, res) => {
   try {
     const {
@@ -14,8 +19,24 @@ router.post("/signup", async (req, res) => {
       researchDomain, supervisor, adminCode,
     } = req.body;
 
-    // Check if user already exists
-    const existingUser = await User.findOne({ email });
+    // ── Basic input validation ────────────────────────────────────────────
+    if (!fullName || !email || !password || !role || !department) {
+      return res.status(400).json({
+        success: false,
+        message: "fullName, email, password, role, and department are required.",
+      });
+    }
+
+    // ── Admin code check ──────────────────────────────────────────────────
+    if (role === "admin" && adminCode !== process.env.ADMIN_CODE) {
+      return res.status(400).json({
+        success: false,
+        message: "Invalid admin authorization code.",
+      });
+    }
+
+    // ── Duplicate email check ─────────────────────────────────────────────
+    const existingUser = await User.findOne({ email: email.toLowerCase() }, "_id").lean();
     if (existingUser) {
       return res.status(400).json({
         success: false,
@@ -23,15 +44,7 @@ router.post("/signup", async (req, res) => {
       });
     }
 
-    // Validate admin code
-    if (role === "admin" && adminCode !== "CAMPUSBUZZ-ADMIN-2025") {
-      return res.status(400).json({
-        success: false,
-        message: "Invalid admin authorization code.",
-      });
-    }
-
-    // Create user
+    // ── Create user ───────────────────────────────────────────────────────
     const user = await User.create({
       fullName,
       email,
@@ -46,10 +59,9 @@ router.post("/signup", async (req, res) => {
       researchDomain,
       supervisor,
       adminCode,
-      isVerified: role !== "admin", // Admins need manual verification
+      isVerified: role !== "admin",
     });
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.status(201).json({
@@ -57,33 +69,26 @@ router.post("/signup", async (req, res) => {
       message: `${role.charAt(0).toUpperCase() + role.slice(1)} account created successfully!`,
       token,
       user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
+        id:         user._id,
+        fullName:   user.fullName,
+        email:      user.email,
+        role:       user.role,
         department: user.department,
       },
     });
   } catch (error) {
-    // Handle validation errors
     if (error.name === "ValidationError") {
       const messages = Object.values(error.errors).map((e) => e.message);
-      return res.status(400).json({
-        success: false,
-        message: messages.join(", "),
-      });
+      return res.status(400).json({ success: false, message: messages.join(", ") });
     }
-
     console.error("Signup Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error. Please try again.",
-    });
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
   }
 });
 
-// ===================== LOGIN =====================
+// ═══════════════════════════════════════════════════════════════════════════
 // POST /api/auth/login
+// ═══════════════════════════════════════════════════════════════════════════
 router.post("/login", async (req, res) => {
   try {
     const { email, password, role } = req.body;
@@ -95,41 +100,31 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Find user with password field
-    const user = await User.findOne({ email }).select("+password");
+    // Select password field (normally excluded by schema)
+    const user = await User.findOne({ email: email.toLowerCase() }).select("+password");
     if (!user) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password.",
-      });
+      // Constant-time response — don't reveal whether email exists
+      return res.status(401).json({ success: false, message: "Invalid email or password." });
     }
 
-    // Check password
-    const isMatch = await user.comparePassword(password);
+    const isMatch = user.comparePassword(password);
     if (!isMatch) {
-      return res.status(401).json({
-        success: false,
-        message: "Invalid email or password.",
-      });
+      return res.status(401).json({ success: false, message: "Invalid email or password." });
     }
 
-    // Check role match
+    // Role mismatch
     if (role && user.role !== role) {
       return res.status(401).json({
         success: false,
-        message: `This account is registered as ${user.role}, not ${role}.`,
+        message: `This account is registered as '${user.role}', not '${role}'.`,
       });
     }
 
-    // Check admin verification
+    // Admin not yet verified
     if (user.role === "admin" && !user.isVerified) {
-      return res.status(403).json({
-        success: false,
-        message: "Admin account is pending verification.",
-      });
+      return res.status(403).json({ success: false, message: "Admin account is pending verification." });
     }
 
-    // Generate token
     const token = generateToken(user._id);
 
     res.status(200).json({
@@ -137,85 +132,99 @@ router.post("/login", async (req, res) => {
       message: "Login successful!",
       token,
       user: {
-        id: user._id,
-        fullName: user.fullName,
-        email: user.email,
-        role: user.role,
-        department: user.department,
-        phone: user.phone,
-        rollNumber: user.rollNumber,
-        year: user.year,
-        designation: user.designation,
-        facultyId: user.facultyId,
+        id:             user._id,
+        fullName:       user.fullName,
+        email:          user.email,
+        role:           user.role,
+        department:     user.department,
+        phone:          user.phone,
+        rollNumber:     user.rollNumber,
+        year:           user.year,
+        designation:    user.designation,
+        facultyId:      user.facultyId,
         researchDomain: user.researchDomain,
-        supervisor: user.supervisor,
+        supervisor:     user.supervisor,
+        isVerified:     user.isVerified,
       },
     });
   } catch (error) {
     console.error("Login Error:", error);
-    res.status(500).json({
-      success: false,
-      message: "Server error. Please try again.",
-    });
+    res.status(500).json({ success: false, message: "Server error. Please try again." });
   }
 });
 
-// ===================== GET CURRENT USER =====================
-// GET /api/auth/me
-router.get("/me", protect, async (req, res) => {
-  const user = await User.findById(req.user._id);
+// ═══════════════════════════════════════════════════════════════════════════
+// GET /api/auth/me  — current user (served from auth-cache, no extra DB call)
+// ═══════════════════════════════════════════════════════════════════════════
+router.get("/me", protect, (req, res) => {
+  // req.user is already populated by the protect middleware (from cache or DB)
+  const u = req.user;
   res.status(200).json({
     success: true,
     user: {
-      id: user._id,
-      fullName: user.fullName,
-      email: user.email,
-      role: user.role,
-      department: user.department,
-      phone: user.phone,
-      rollNumber: user.rollNumber,
-      year: user.year,
-      designation: user.designation,
-      facultyId: user.facultyId,
-      researchDomain: user.researchDomain,
-      supervisor: user.supervisor,
-      interests: user.interests,
-      createdAt: user.createdAt,
+      id:             u._id,
+      fullName:       u.fullName,
+      email:          u.email,
+      role:           u.role,
+      department:     u.department,
+      phone:          u.phone,
+      rollNumber:     u.rollNumber,
+      year:           u.year,
+      designation:    u.designation,
+      facultyId:      u.facultyId,
+      researchDomain: u.researchDomain,
+      supervisor:     u.supervisor,
+      interests:      u.interests,
+      avatar:         u.avatar,
+      isVerified:     u.isVerified,
+      createdAt:      u.createdAt,
     },
   });
 });
 
-// ===================== UPDATE PROFILE =====================
-// PUT /api/auth/profile
+// ═══════════════════════════════════════════════════════════════════════════
+// PUT /api/auth/profile  — update profile
+// ═══════════════════════════════════════════════════════════════════════════
 router.put("/profile", protect, async (req, res) => {
   try {
-    const allowedFields = [
-      "fullName", "phone", "department", "interests",
+    const ALLOWED_FIELDS = [
+      "fullName", "phone", "department", "interests", "avatar",
       "rollNumber", "year", "designation", "facultyId",
       "researchDomain", "supervisor",
     ];
 
     const updates = {};
-    allowedFields.forEach((field) => {
+    ALLOWED_FIELDS.forEach((field) => {
       if (req.body[field] !== undefined) updates[field] = req.body[field];
     });
 
-    const user = await User.findByIdAndUpdate(req.user._id, updates, {
-      new: true,
-      runValidators: true,
-    });
+    if (Object.keys(updates).length === 0) {
+      return res.status(400).json({ success: false, message: "No valid fields to update." });
+    }
 
-    res.status(200).json({
-      success: true,
-      message: "Profile updated successfully.",
-      user,
-    });
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      updates,
+      { new: true, runValidators: true, select: USER_PUBLIC_FIELDS }
+    ).lean();
+
+    // Invalidate the auth cache so subsequent requests get fresh data
+    invalidateUserCache(req.user._id.toString());
+
+    res.status(200).json({ success: true, message: "Profile updated.", user });
   } catch (error) {
-    res.status(500).json({
-      success: false,
-      message: "Failed to update profile.",
-    });
+    console.error("Profile Update Error:", error);
+    res.status(500).json({ success: false, message: "Failed to update profile." });
   }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// POST /api/auth/logout  — clear cookie
+// ═══════════════════════════════════════════════════════════════════════════
+router.post("/logout", protect, (req, res) => {
+  invalidateUserCache(req.user._id.toString());
+  res.clearCookie("token");
+  res.status(200).json({ success: true, message: "Logged out successfully." });
 });
 
 module.exports = router;
