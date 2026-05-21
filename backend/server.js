@@ -122,6 +122,7 @@ async function startWorker() {
   // ══════════════════════════════ ROUTES ════════════════════════════════
   app.use("/api/auth",   require("./routes/auth"));
   app.use("/api/events", require("./routes/events"));
+  app.use("/api/users",  require("./routes/users"));
 
   // Health check — lightweight, responds instantly, no DB call
   app.get("/api/health", (req, res) => {

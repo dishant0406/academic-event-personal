@@ -55,6 +55,9 @@ const eventSchema = new mongoose.Schema(
       },
     ],
     tags: [String],
+    subjectTags: [String],
+    bannerImage: { type: String },
+    attachments: [{ title: String, url: String }],
     color: {
       type: String,
       default: "#6366f1",
@@ -68,6 +71,9 @@ const eventSchema = new mongoose.Schema(
       enum: ["pending", "approved", "rejected"],
       default: "pending",
     },
+    rejectionReason: {
+      type: String,
+    },
     createdBy: {
       type: mongoose.Schema.Types.ObjectId,
       ref: "User",
@@ -80,8 +86,8 @@ const eventSchema = new mongoose.Schema(
 );
 
 // ─── Indexes ──────────────────────────────────────────────────────────────
-// Full-text search on title, description, tags
-eventSchema.index({ title: "text", description: "text", tags: "text" });
+// Full-text search on title, description, tags, subjectTags
+eventSchema.index({ title: "text", description: "text", tags: "text", subjectTags: "text" });
 
 // Compound indexes matching the most common filter combinations
 // (status is almost always in the query, so it leads every compound index)

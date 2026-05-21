@@ -6,7 +6,7 @@ const { generateToken, protect, invalidateUserCache } = require("../middleware/a
 const router = express.Router();
 
 // ─── Shared user projection — never expose password / adminCode ────────────
-const USER_PUBLIC_FIELDS = "fullName email role department phone rollNumber year designation facultyId researchDomain supervisor interests avatar createdAt";
+const USER_PUBLIC_FIELDS = "fullName email role department phone rollNumber year designation facultyId researchDomain supervisor interests subscribedSubjects bookmarks notifications avatar createdAt";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // POST /api/auth/signup
@@ -59,7 +59,7 @@ router.post("/signup", async (req, res) => {
       researchDomain,
       supervisor,
       adminCode,
-      isVerified: role !== "admin",
+      isVerified: true, // Auto-verify since we already checked process.env.ADMIN_CODE
     });
 
     const token = generateToken(user._id);
@@ -120,10 +120,7 @@ router.post("/login", async (req, res) => {
       });
     }
 
-    // Admin not yet verified
-    if (user.role === "admin" && !user.isVerified) {
-      return res.status(403).json({ success: false, message: "Admin account is pending verification." });
-    }
+    // Admin not yet verified check removed for MVP since adminCode validates them
 
     const token = generateToken(user._id);
 
@@ -144,6 +141,9 @@ router.post("/login", async (req, res) => {
         facultyId:      user.facultyId,
         researchDomain: user.researchDomain,
         supervisor:     user.supervisor,
+        subscribedSubjects: user.subscribedSubjects,
+        bookmarks:      user.bookmarks,
+        notifications:  user.notifications,
         isVerified:     user.isVerified,
       },
     });
@@ -175,6 +175,9 @@ router.get("/me", protect, (req, res) => {
       researchDomain: u.researchDomain,
       supervisor:     u.supervisor,
       interests:      u.interests,
+      subscribedSubjects: u.subscribedSubjects,
+      bookmarks:      u.bookmarks,
+      notifications:  u.notifications,
       avatar:         u.avatar,
       isVerified:     u.isVerified,
       createdAt:      u.createdAt,
@@ -188,7 +191,7 @@ router.get("/me", protect, (req, res) => {
 router.put("/profile", protect, async (req, res) => {
   try {
     const ALLOWED_FIELDS = [
-      "fullName", "phone", "department", "interests", "avatar",
+      "fullName", "phone", "department", "interests", "subscribedSubjects", "avatar",
       "rollNumber", "year", "designation", "facultyId",
       "researchDomain", "supervisor",
     ];

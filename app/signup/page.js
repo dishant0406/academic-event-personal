@@ -41,7 +41,7 @@ export default function SignupPage() {
     setStep(2);
   };
 
-  const handleSubmit = () => {
+  const handleSubmit = async () => {
     if (!form.fullName.trim()) { showToast("⚠️ Please enter your full name"); return; }
     if (!form.email.trim()) { showToast("⚠️ Please enter your email"); return; }
     if (!form.password || form.password.length < 6) { showToast("⚠️ Password must be at least 6 characters"); return; }
@@ -49,11 +49,26 @@ export default function SignupPage() {
     if (role === "admin" && !form.adminCode.trim()) { showToast("⚠️ Please enter your admin authorization code"); return; }
 
     setLoading(true);
-    setTimeout(() => {
-      localStorage.setItem("currentUser", JSON.stringify({ ...form, role }));
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ ...form, role })
+      });
+      const data = await res.json();
+      
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("currentUser", JSON.stringify(data.user));
+        setSuccess(true);
+      } else {
+        showToast(`❌ ${data.message || "Failed to create account"}`);
+      }
+    } catch (err) {
+      showToast("❌ Server error. Please verify the backend is running.");
+    } finally {
       setLoading(false);
-      setSuccess(true);
-    }, 2000);
+    }
   };
 
   if (success) {
@@ -64,11 +79,11 @@ export default function SignupPage() {
           <div style={{ fontSize: "4rem", marginBottom: 20 }}>🎉</div>
           <h1 style={{ marginBottom: 12 }}>Account Created!</h1>
           <p style={{ color: "var(--text-secondary)", marginBottom: 8, fontFamily: "Inter,sans-serif" }}>
-            Welcome to CampusBuzz, <strong>{form.fullName}</strong>!
+            Welcome to AEH, <strong>{form.fullName}</strong>!
           </p>
           <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: 32, fontFamily: "Inter,sans-serif" }}>
             {role === "admin"
-              ? "Your admin account is pending verification. You'll receive an email once approved."
+              ? "Your admin account has been created and verified using your authorization code. You can now sign in and access the moderation dashboard."
               : "Your account has been created. You can now sign in and start discovering events."}
           </p>
           <div style={{ display: "flex", gap: 12, justifyContent: "center", flexWrap: "wrap" }}>
@@ -93,10 +108,10 @@ export default function SignupPage() {
           <div className="auth-logo" onClick={() => router.push("/")} style={{ cursor: "pointer" }}>
             <div className="logo-icon">⚡</div>
             <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.5rem", fontWeight: 700, textTransform: "uppercase" }}>
-              Campus<span style={{ color: "var(--accent-primary)" }}>Buzz</span>
+              Academic Events <span style={{ color: "var(--accent-primary)" }}>Hub</span>
             </span>
           </div>
-          <h1>{step === 1 ? "Join CampusBuzz" : `Sign Up as ${selectedRole?.label}`}</h1>
+          <h1>{step === 1 ? "Join AEH" : `Sign Up as ${selectedRole?.label}`}</h1>
           <p>{step === 1 ? "Select your role to get started" : "Fill in your details to create your account"}</p>
         </div>
 
@@ -115,16 +130,26 @@ export default function SignupPage() {
 
         {/* STEP 1: Role Selection */}
         {step === 1 && (
-          <div className="auth-role-grid">
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginTop: "24px" }}>
             {ROLES.map(r => (
               <div
                 key={r.id}
-                className="auth-role-card"
                 onClick={() => handleSelectRole(r.id)}
+                style={{ 
+                  border: "1px solid var(--border)", 
+                  borderRadius: "12px", 
+                  padding: "20px", 
+                  cursor: "pointer", 
+                  background: "var(--surface)", 
+                  transition: "all 0.2s ease",
+                  textAlign: "center"
+                }}
+                onMouseEnter={(e) => { e.currentTarget.style.borderColor = r.color; e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.1)"; }}
+                onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
               >
-                <div className="auth-role-card-icon">{r.icon}</div>
-                <h3 style={{ fontFamily: "Inter,sans-serif", fontSize: "1rem", fontWeight: 700 }}>{r.label}</h3>
-                <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", fontFamily: "Inter,sans-serif" }}>{r.desc}</p>
+                <div style={{ fontSize: "3rem", marginBottom: "12px" }}>{r.icon}</div>
+                <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "1.2rem", fontWeight: 700, marginBottom: "8px", color: r.color }}>{r.label}</h3>
+                <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", fontFamily: "Outfit, sans-serif", lineHeight: 1.4 }}>{r.desc}</p>
               </div>
             ))}
           </div>

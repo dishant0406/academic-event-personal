@@ -20,6 +20,12 @@ export default function Home() {
   // State for filters
   const [typeFilter, setTypeFilter] = useState("all");
   const [deptFilter, setDeptFilter] = useState("All Departments");
+  const [subjectFilter, setSubjectFilter] = useState("All Subjects");
+  const [searchQuery, setSearchQuery] = useState("");
+  const [debouncedSearch, setDebouncedSearch] = useState("");
+  
+  // Auth State
+  const [user, setUser] = useState(null);
 
   // Fetch Featured Events (only on mount)
   useEffect(() => {
@@ -35,7 +41,23 @@ export default function Home() {
       }
     };
     fetchFeatured();
+    
+    // Check auth
+    const storedUser = localStorage.getItem("currentUser");
+    if (storedUser) {
+      try {
+        const parsed = JSON.parse(storedUser);
+        setUser(parsed);
+        // If user has subscribed subjects, default to showing them? (Optional MVP enhancement)
+      } catch(e) {}
+    }
   }, []);
+  
+  // Debounce search
+  useEffect(() => {
+    const timer = setTimeout(() => setDebouncedSearch(searchQuery), 500);
+    return () => clearTimeout(timer);
+  }, [searchQuery]);
 
   // Fetch Upcoming Events (when filters or page changes)
   useEffect(() => {
@@ -45,6 +67,8 @@ export default function Home() {
         let url = `http://localhost:5000/api/events?page=${page}&limit=6`;
         if (typeFilter !== "all") url += `&type=${typeFilter}`;
         if (deptFilter !== "All Departments") url += `&department=${encodeURIComponent(deptFilter)}`;
+        if (subjectFilter !== "All Subjects") url += `&subject=${encodeURIComponent(subjectFilter)}`;
+        if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
         
         const res = await fetch(url);
         const data = await res.json();
@@ -65,7 +89,7 @@ export default function Home() {
     };
     
     fetchUpcoming();
-  }, [typeFilter, deptFilter, page]);
+  }, [typeFilter, deptFilter, subjectFilter, debouncedSearch, page]);
 
   // Handlers for filters
   const handleTypeChange = (e) => {
@@ -84,16 +108,29 @@ export default function Home() {
       <nav className="navbar">
         <div className="navbar-brand">
           <div className="logo-icon">⚡</div>
-          CampusBuzz
+          Academic Events Hub (AEH)
         </div>
         <div className="navbar-links">
           <a href="#" style={{ color: "var(--text-primary)", fontWeight: 600 }}>Home</a>
           <a href="#events">Events</a>
-          <a href="#features">Features</a>
+          <a href="/calendar">Calendar</a>
         </div>
-        <div style={{ display: "flex", gap: 12 }}>
-          <button className="btn btn-ghost btn-sm" onClick={() => router.push("/login")}>Login</button>
-          <button className="btn btn-primary btn-sm" onClick={() => router.push("/signup")}>Sign Up</button>
+        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+          {user ? (
+            <>
+              <button className="btn btn-ghost btn-sm" onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
+                Dashboard
+              </button>
+              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--accent-primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", cursor: "pointer" }} onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
+                {user.fullName.charAt(0)}
+              </div>
+            </>
+          ) : (
+            <>
+              <button className="btn btn-ghost btn-sm" onClick={() => router.push("/login")}>Login</button>
+              <button className="btn btn-primary btn-sm" onClick={() => router.push("/signup")}>Sign Up</button>
+            </>
+          )}
         </div>
       </nav>
 
@@ -103,9 +140,9 @@ export default function Home() {
         <div className="hero-content fade-in">
           <div className="hero-badge">🎓 Banaras Hindu University & Beyond</div>
           <h1>Discover Every Academic Event On Campus</h1>
-          <p>One platform to find seminars, workshops, conferences, guest lectures, and training programs. Never miss an opportunity to learn, collaborate, and grow.</p>
+          <p>One platform to find seminars, workshops, conferences, guest lectures, and training programs. Never miss a relevant academic opportunity again.</p>
           <div className="hero-stats">
-            {[["1,200+","Events Published"],["45","Departments"],["28,000+","Students Reached"],["95%","Satisfaction"]].map(([n,l])=>(
+            {[["1,200+","Events Published"],["100+","Departments"],["30,000+","Students Reached"],["95%","Satisfaction"]].map(([n,l])=>(
               <div key={l} className="hero-stat"><div className="number">{n}</div><div className="label">{l}</div></div>
             ))}
           </div>
@@ -165,6 +202,19 @@ export default function Home() {
             <p>A glimpse of what&apos;s happening across campus</p>
           </div>
           
+          {/* SEARCH BAR */}
+          <div style={{ maxWidth: 600, margin: "0 auto 2rem", position: "relative" }}>
+            <input 
+              type="text" 
+              className="form-input" 
+              placeholder="Search by title, speaker, keyword, or domain... (Ctrl+K)" 
+              value={searchQuery}
+              onChange={e => { setSearchQuery(e.target.value); setPage(1); }}
+              style={{ paddingLeft: "40px", borderRadius: "50px", fontSize: "1.1rem" }}
+            />
+            <span style={{ position: "absolute", left: "16px", top: "50%", transform: "translateY(-50%)", opacity: 0.5 }}>🔍</span>
+          </div>
+          
           {/* FILTER BAR */}
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "3rem", padding: "1rem", background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
@@ -194,6 +244,23 @@ export default function Home() {
                 ))}
               </select>
             </div>
+
+            <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem", fontWeight: 500 }}>Subject:</span>
+              <select 
+                className="input-field" 
+                style={{ padding: "8px 12px", width: "auto", minWidth: "180px" }}
+                value={subjectFilter}
+                onChange={e => { setSubjectFilter(e.target.value); setPage(1); }}
+              >
+                <option value="All Subjects">All Subjects</option>
+                <option value="Computer Science">Computer Science</option>
+                <option value="Physics">Physics</option>
+                <option value="Mathematics">Mathematics</option>
+                <option value="AI & ML">AI & ML</option>
+                <option value="Robotics">Robotics</option>
+              </select>
+            </div>
           </div>
 
           {/* EVENTS FEED */}
@@ -208,7 +275,7 @@ export default function Home() {
           ) : (
             <div className="events-grid">
               {upcomingEvents.map(e => (
-                <div key={e._id} className="event-card">
+                <div key={e._id} className="event-card" onClick={() => router.push(`/events/${e._id}`)} style={{ cursor: "pointer" }}>
                   <div className="event-card-banner" style={{ background: `linear-gradient(135deg, ${e.color || '#6366f1'}22, ${e.color || '#6366f1'}08)` }}>
                     <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: "3rem", opacity: 0.3 }}>
                       {e.type === "conference" ? "🏛️" : e.type === "workshop" ? "🔧" : "📋"}
@@ -258,7 +325,7 @@ export default function Home() {
       {/* FEATURES */}
       <section id="features" className="section">
         <div className="section-header">
-          <h2>Why CampusBuzz?</h2>
+          <h2>Why AEH?</h2>
           <p>Built for the unique needs of large universities</p>
         </div>
         <div className="features-grid">
@@ -276,14 +343,14 @@ export default function Home() {
       <footer className="footer">
         <div className="footer-grid">
           <div className="footer-brand">
-            <h3>⚡ CampusBuzz</h3>
-            <p>Never miss the buzz. The academic pulse of your campus — built for IIT BHU and beyond.</p>
+            <h3>⚡ Academic Events Hub</h3>
+            <p>Never miss a relevant academic opportunity again. The academic pulse of your campus — built for Banaras Hindu University and beyond.</p>
           </div>
           <div className="footer-col"><h4>Platform</h4><a href="#">Discover</a><a href="#">Calendar</a><a href="#">Submit Event</a></div>
           <div className="footer-col"><h4>Resources</h4><a href="#">Documentation</a><a href="#">API Access</a><a href="#">Help Center</a></div>
-          <div className="footer-col"><h4>Contact</h4><a href="#">campusbuzz@bhu.ac.in</a><a href="#">Varanasi, UP 221005</a></div>
+          <div className="footer-col"><h4>Contact</h4><a href="#">support@aeh.bhu.ac.in</a><a href="#">Varanasi, UP 221005</a></div>
         </div>
-        <div className="footer-bottom">© 2026 CampusBuzz — Never Miss the Buzz. Made with ❤️ at IIT BHU.</div>
+        <div className="footer-bottom">© 2026 Academic Events Hub (AEH) — Never miss a relevant academic opportunity again. Made with ❤️ at BHU.</div>
       </footer>
     </>
   );

@@ -19,51 +19,34 @@ export default function LoginPage() {
 
   const selectedRole = ROLES.find(r => r.id === role);
 
-  const handleLogin = () => {
+  const handleLogin = async () => {
     if (!email.trim()) { setToast("⚠️ Please enter your email"); setTimeout(() => setToast(null), 3000); return; }
     if (!password.trim()) { setToast("⚠️ Please enter your password"); setTimeout(() => setToast(null), 3000); return; }
 
     setLoading(true);
-    setTimeout(() => {
-      setLoading(false);
+    try {
+      const res = await fetch("http://localhost:5000/api/auth/login", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: email.trim(), password, role })
+      });
+      const data = await res.json();
       
-      let isValid = false;
-      let redirectRole = role;
-      const storedUser = localStorage.getItem("currentUser");
-      
-      if (storedUser) {
-        try {
-          const user = JSON.parse(storedUser);
-          if (user.email === email.trim() && user.password === password) {
-            isValid = true;
-            redirectRole = user.role || role;
-          }
-        } catch (e) {}
-      }
-      
-      // Fallback mock accounts matching the database seed
-      const MOCK_DB = [
-        { email: "ashish@iitbhu.ac.in", password: "password123", fullName: "Ashish Kumar", role: "student" },
-        { email: "priya@iitbhu.ac.in", password: "password123", fullName: "Dr. Priya Sharma", role: "faculty" },
-        { email: "ankit@iitbhu.ac.in", password: "password123", fullName: "Ankit Verma", role: "scholar" },
-        { email: "admin@iitbhu.ac.in", password: "admin123", fullName: "System Admin", role: "admin" }
-      ];
-
-      const mockUser = MOCK_DB.find(u => u.email === email.trim() && u.password === password);
-      if (mockUser) {
-        isValid = true;
-        redirectRole = mockUser.role;
-        localStorage.setItem("currentUser", JSON.stringify(mockUser));
-      }
-
-      if (isValid) {
+      if (data.success) {
+        localStorage.setItem("token", data.token);
+        localStorage.setItem("currentUser", JSON.stringify(data.user));
         setToast("✅ Login successful! Redirecting...");
-        setTimeout(() => router.push(`/${redirectRole}`), 1000);
+        setTimeout(() => router.push(`/${data.user.role}`), 1000);
       } else {
-        setToast("❌ Invalid email or password. Please try again.");
+        setToast(`❌ ${data.message || "Invalid email or password"}`);
         setTimeout(() => setToast(null), 3000);
       }
-    }, 1200);
+    } catch (err) {
+      setToast("❌ Server error. Please verify the backend is running.");
+      setTimeout(() => setToast(null), 3000);
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -77,11 +60,11 @@ export default function LoginPage() {
           <div className="auth-logo" onClick={() => router.push("/")} style={{ cursor: "pointer" }}>
             <div className="logo-icon">⚡</div>
             <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.5rem", fontWeight: 700, textTransform: "uppercase" }}>
-              Campus<span style={{ color: "var(--accent-primary)" }}>Buzz</span>
+              Academic Events <span style={{ color: "var(--accent-primary)" }}>Hub</span>
             </span>
           </div>
           <h1>Welcome Back</h1>
-          <p>Sign in to your CampusBuzz account</p>
+          <p>Sign in to your AEH account</p>
         </div>
 
         {/* Role Selector */}

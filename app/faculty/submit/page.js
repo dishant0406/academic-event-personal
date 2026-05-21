@@ -1,132 +1,234 @@
 "use client";
-import { useState } from "react";
-import { EVENT_TYPES, DEPARTMENTS } from "@/lib/data";
 
-export default function FacultySubmit() {
-  const [form, setForm] = useState({
-    title: "", description: "", type: "seminar", department: DEPARTMENTS[1],
-    date: "", endDate: "", time: "", venue: "", speaker: "", capacity: "", tags: ""
+import React, { useState } from 'react';
+import { useRouter } from 'next/navigation';
+
+export default function SubmitEventPage() {
+  const router = useRouter();
+  const [step, setStep] = useState(1);
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    type: 'seminar',
+    date: '',
+    time: '',
+    venue: '',
+    speaker: '',
+    capacity: '',
+    department: '',
+    tags: ''
   });
-  const [toast, setToast] = useState(null);
-  const [submitted, setSubmitted] = useState(false);
 
-  const set = (k, v) => setForm(f => ({ ...f, [k]: v }));
-  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 4000); };
+  const [toast, setToast] = useState({ show: false, message: '', type: 'success' });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = () => {
-    if (!form.title.trim()) { showToast("⚠️ Please enter an event title"); return; }
-    if (!form.description.trim()) { showToast("⚠️ Please enter a description"); return; }
-    if (!form.date) { showToast("⚠️ Please select a start date"); return; }
-    if (!form.venue.trim()) { showToast("⚠️ Please enter a venue"); return; }
-
-    setSubmitted(true);
-    showToast("✅ Event submitted for admin review! You'll be notified once approved.");
+  const showToast = (message, type = 'success') => {
+    setToast({ show: true, message, type });
+    setTimeout(() => setToast({ show: false, message: '', type: 'success' }), 3000);
   };
 
-  const handleReset = () => {
-    setForm({ title: "", description: "", type: "seminar", department: DEPARTMENTS[1], date: "", endDate: "", time: "", venue: "", speaker: "", capacity: "", tags: "" });
-    setSubmitted(false);
+  const handleNext = () => setStep(prev => prev + 1);
+  const handlePrev = () => setStep(prev => prev - 1);
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  if (submitted) {
-    return (
-      <>
-        <div className="dashboard-header">
-          <h1>Create Event ➕</h1>
-          <p>Publish a new academic event to the university</p>
-        </div>
-        <div style={{ textAlign: "center", padding: 60, background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-xl)" }}>
-          <div style={{ fontSize: "4rem", marginBottom: 20 }}>🎉</div>
-          <h2 style={{ marginBottom: 12 }}>Event Submitted Successfully!</h2>
-          <p style={{ color: "var(--text-secondary)", marginBottom: 8, fontFamily: "Inter,sans-serif" }}>
-            Your event <strong>&quot;{form.title}&quot;</strong> has been submitted for review.
-          </p>
-          <p style={{ color: "var(--text-muted)", fontSize: "0.85rem", marginBottom: 32, fontFamily: "Inter,sans-serif" }}>
-            The admin team will review it shortly. You&apos;ll receive a notification once it&apos;s approved.
-          </p>
-          <div style={{ display: "flex", gap: 12, justifyContent: "center" }}>
-            <button className="btn btn-primary btn-lg" style={{ background: "#10b981" }} onClick={handleReset}>
-              ➕ Submit Another Event
-            </button>
-            <button className="btn btn-secondary btn-lg" onClick={() => window.location.href = "/faculty"}>
-              ← Back to Dashboard
-            </button>
-          </div>
-        </div>
-        {toast && <div className="toast">{toast}</div>}
-      </>
-    );
-  }
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        showToast('Authentication error: No token found. Please log in.', 'error');
+        setLoading(false);
+        return;
+      }
+
+      // Format payload
+      const payload = {
+        ...formData,
+        capacity: formData.capacity ? parseInt(formData.capacity, 10) : undefined,
+        tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : []
+      };
+
+      const res = await fetch('http://localhost:5000/api/events', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(payload)
+      });
+
+      const data = await res.json().catch(() => ({}));
+
+      if (!res.ok) {
+        throw new Error(data.message || 'Failed to submit event');
+      }
+
+      showToast('Event submitted successfully!', 'success');
+      
+      // Reset form
+      setFormData({
+        title: '',
+        description: '',
+        type: 'seminar',
+        date: '',
+        time: '',
+        venue: '',
+        speaker: '',
+        capacity: '',
+        department: '',
+        tags: ''
+      });
+      setStep(1);
+      
+    } catch (err) {
+      showToast(err.message, 'error');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
-    <>
-      <div className="dashboard-header">
-        <h1>Create Event ➕</h1>
-        <p>Publish a new academic event to the university</p>
+    <div style={{ maxWidth: '600px', margin: '2rem auto', padding: '2rem', backgroundColor: '#fff', borderRadius: '8px', boxShadow: '0 4px 6px rgba(0,0,0,0.1)' }}>
+      <h1 style={{ fontSize: '1.5rem', fontWeight: 'bold', marginBottom: '1.5rem', textAlign: 'center', color: '#111827' }}>Submit New Academic Event</h1>
+      
+      {/* Stepper Indicator */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '2rem', position: 'relative' }}>
+        {[1, 2, 3].map(num => (
+          <div key={num} style={{ 
+            width: '32px', height: '32px', borderRadius: '50%', 
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            backgroundColor: step >= num ? '#2563eb' : '#e5e7eb',
+            color: step >= num ? '#fff' : '#6b7280',
+            fontWeight: 'bold', zIndex: 1
+          }}>
+            {num}
+          </div>
+        ))}
+        {/* Progress Line */}
+        <div style={{ position: 'absolute', top: '15px', left: '16px', right: '16px', height: '2px', backgroundColor: '#e5e7eb', zIndex: 0 }} />
+        <div style={{ position: 'absolute', top: '15px', left: '16px', width: step === 1 ? '0%' : step === 2 ? '50%' : '100%', height: '2px', backgroundColor: '#2563eb', zIndex: 0, transition: 'width 0.3s ease' }} />
       </div>
-      <div className="form-container" style={{ maxWidth: "100%" }}>
-        <div className="form-group">
-          <label className="form-label">Event Title *</label>
-          <input className="form-input" placeholder="e.g. Workshop on Machine Learning" value={form.title} onChange={e => set("title", e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Description *</label>
-          <textarea className="form-textarea" placeholder="Describe the event, topics covered, who should attend…" value={form.description} onChange={e => set("description", e.target.value)} />
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Event Type</label>
-            <select className="form-select" value={form.type} onChange={e => set("type", e.target.value)}>
-              {EVENT_TYPES.filter(t => t.value !== "all").map(t => <option key={t.value} value={t.value}>{t.label}</option>)}
-            </select>
+
+      <form onSubmit={step === 3 ? handleSubmit : (e) => { e.preventDefault(); handleNext(); }}>
+        {step === 1 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <h2 style={{ fontSize: '1.25rem', color: '#374151', margin: 0 }}>Step 1: Basic Details</h2>
+            <div className="form-group">
+              <label className="form-label" htmlFor="title">Event Title <span style={{color: '#ef4444'}}>*</span></label>
+              <input type="text" id="title" name="title" className="form-input" required value={formData.title} onChange={handleChange} placeholder="Enter event title" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="description">Description <span style={{color: '#ef4444'}}>*</span></label>
+              <textarea id="description" name="description" className="form-input" rows={4} required value={formData.description} onChange={handleChange} placeholder="Describe the event..."></textarea>
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="type">Event Type <span style={{color: '#ef4444'}}>*</span></label>
+              <select id="type" name="type" className="form-input" required value={formData.type} onChange={handleChange}>
+                <option value="seminar">Seminar</option>
+                <option value="workshop">Workshop</option>
+                <option value="lecture">Guest Lecture</option>
+                <option value="conference">Conference</option>
+                <option value="training">Training / Symposium</option>
+              </select>
+            </div>
           </div>
-          <div className="form-group">
-            <label className="form-label">Department</label>
-            <select className="form-select" value={form.department} onChange={e => set("department", e.target.value)}>
-              {DEPARTMENTS.filter(d => d !== "All Departments").map(d => <option key={d}>{d}</option>)}
-            </select>
+        )}
+
+        {step === 2 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <h2 style={{ fontSize: '1.25rem', color: '#374151', margin: 0 }}>Step 2: Schedule & Venue</h2>
+            <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
+              <div className="form-group" style={{ flex: '1 1 200px' }}>
+                <label className="form-label" htmlFor="date">Date <span style={{color: '#ef4444'}}>*</span></label>
+                <input type="date" id="date" name="date" className="form-input" required value={formData.date} onChange={handleChange} />
+              </div>
+              <div className="form-group" style={{ flex: '1 1 200px' }}>
+                <label className="form-label" htmlFor="time">Time <span style={{color: '#ef4444'}}>*</span></label>
+                <input type="time" id="time" name="time" className="form-input" required value={formData.time} onChange={handleChange} />
+              </div>
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="venue">Venue <span style={{color: '#ef4444'}}>*</span></label>
+              <input type="text" id="venue" name="venue" className="form-input" required value={formData.venue} onChange={handleChange} placeholder="Room number or location" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="speaker">Speaker(s)</label>
+              <input type="text" id="speaker" name="speaker" className="form-input" value={formData.speaker} onChange={handleChange} placeholder="e.g. Dr. Jane Doe" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="capacity">Capacity</label>
+              <input type="number" id="capacity" name="capacity" className="form-input" min="1" value={formData.capacity} onChange={handleChange} placeholder="Maximum attendees" />
+            </div>
           </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Start Date *</label>
-            <input className="form-input" type="date" value={form.date} onChange={e => set("date", e.target.value)} />
+        )}
+
+        {step === 3 && (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            <h2 style={{ fontSize: '1.25rem', color: '#374151', margin: 0 }}>Step 3: Subjects & Tags</h2>
+            <div className="form-group">
+              <label className="form-label" htmlFor="department">Department <span style={{color: '#ef4444'}}>*</span></label>
+              <input type="text" id="department" name="department" className="form-input" required value={formData.department} onChange={handleChange} placeholder="e.g. Computer Science" />
+            </div>
+            <div className="form-group">
+              <label className="form-label" htmlFor="tags">Subject Tags</label>
+              <input type="text" id="tags" name="tags" className="form-input" value={formData.tags} onChange={handleChange} placeholder="e.g. AI, Machine Learning (comma separated)" />
+            </div>
           </div>
-          <div className="form-group">
-            <label className="form-label">End Date</label>
-            <input className="form-input" type="date" value={form.endDate} onChange={e => set("endDate", e.target.value)} />
-          </div>
+        )}
+
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '2rem' }}>
+          {step > 1 ? (
+            <button type="button" onClick={handlePrev} style={{ padding: '0.5rem 1rem', border: '1px solid #d1d5db', borderRadius: '4px', cursor: 'pointer', backgroundColor: '#fff', color: '#374151', fontWeight: '500' }}>
+              Previous
+            </button>
+          ) : (
+            <div></div> 
+          )}
+
+          {step < 3 ? (
+            <button type="submit" className="btn-primary" style={{ padding: '0.5rem 1.5rem', cursor: 'pointer' }}>
+              Next
+            </button>
+          ) : (
+            <button type="submit" className="btn-primary" disabled={loading} style={{ padding: '0.5rem 1.5rem', cursor: loading ? 'not-allowed' : 'pointer', opacity: loading ? 0.7 : 1 }}>
+              {loading ? 'Submitting...' : 'Submit Event'}
+            </button>
+          )}
         </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Time</label>
-            <input className="form-input" placeholder="e.g. 10:00 AM - 04:00 PM" value={form.time} onChange={e => set("time", e.target.value)} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Venue *</label>
-            <input className="form-input" placeholder="e.g. Science Faculty Hall" value={form.venue} onChange={e => set("venue", e.target.value)} />
-          </div>
+      </form>
+
+      {/* Toast Notification */}
+      {toast.show && (
+        <div style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          padding: '1rem 1.5rem',
+          borderRadius: '8px',
+          color: '#fff',
+          backgroundColor: toast.type === 'success' ? '#10b981' : '#ef4444',
+          boxShadow: '0 10px 15px -3px rgba(0,0,0,0.1)',
+          zIndex: 50,
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem',
+          animation: 'slideUp 0.3s ease-out'
+        }}>
+          {toast.message}
         </div>
-        <div className="form-group">
-          <label className="form-label">Speaker(s)</label>
-          <input className="form-input" placeholder="e.g. Prof. Arun Kumar" value={form.speaker} onChange={e => set("speaker", e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Capacity</label>
-          <input className="form-input" type="number" placeholder="e.g. 200" value={form.capacity} onChange={e => set("capacity", e.target.value)} />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Tags (comma-separated)</label>
-          <input className="form-input" placeholder="e.g. AI, machine learning, workshop" value={form.tags} onChange={e => set("tags", e.target.value)} />
-        </div>
-        <button className="btn btn-primary btn-lg" style={{ width: "100%", justifyContent: "center", background: "#10b981" }} onClick={handleSubmit}>
-          Submit for Review →
-        </button>
-        <p style={{ fontSize: "0.8rem", color: "var(--text-muted)", textAlign: "center", marginTop: 12, fontFamily: "Inter,sans-serif" }}>
-          Events are reviewed by administrators before being published.
-        </p>
-      </div>
-      {toast && <div className="toast">{toast}</div>}
-    </>
+      )}
+      <style dangerouslySetInnerHTML={{__html: `
+        @keyframes slideUp {
+          from { transform: translateY(100%); opacity: 0; }
+          to { transform: translateY(0); opacity: 1; }
+        }
+      `}} />
+    </div>
   );
 }

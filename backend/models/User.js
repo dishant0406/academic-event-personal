@@ -53,6 +53,15 @@ const userSchema = new mongoose.Schema(
 
     // Common
     interests: [String],
+    subscribedSubjects: [String],
+    bookmarks: [{ type: mongoose.Schema.Types.ObjectId, ref: "Event" }],
+    notifications: [{
+      type: { type: String, enum: ["info", "reminder", "approval", "rejection", "new_event"] },
+      message: String,
+      read: { type: Boolean, default: false },
+      date: { type: Date, default: Date.now },
+      relatedEvent: { type: mongoose.Schema.Types.ObjectId, ref: "Event" }
+    }],
     avatar: { type: String, default: "" },
   },
   {

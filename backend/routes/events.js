@@ -16,7 +16,7 @@ const EVENT_PUBLIC_FIELDS = "title description type department faculty date endD
 router.get("/", async (req, res) => {
   try {
     const {
-      type, department, search, featured,
+      type, department, subject, search, featured,
       status, page = 1, limit = 20,
     } = req.query;
 
@@ -27,6 +27,7 @@ router.get("/", async (req, res) => {
     const filter = {};
     if (type && type !== "all")                     filter.type       = type;
     if (department && department !== "All Departments") filter.department = department;
+    if (subject && subject !== "All Subjects")      filter.subjectTags = subject;
     if (featured === "true")                        filter.featured   = true;
     filter.status = status || "approved"; // default: approved only
 
@@ -39,6 +40,7 @@ router.get("/", async (req, res) => {
             { description: { $regex: search, $options: "i" } },
             { speaker:     { $regex: search, $options: "i" } },
             { tags:        { $in: [new RegExp(search, "i")] } },
+            { subjectTags: { $in: [new RegExp(search, "i")] } },
           ]);
     }
 
