@@ -62,7 +62,7 @@ export default function EventDetailPage({ params }) {
       }
 
       setRsvpStatus('success');
-      alert('Successfully RSVP\\'d for the event!');
+      alert("Successfully RSVP\\'d for the event!");
     } catch (err) {
       setRsvpStatus('error');
       alert(err.message);
