@@ -37,7 +37,7 @@ const seedDB = async () => {
       {
         fullName: "Admin User", email: "admin@iitbhu.ac.in", password: "admin123",
         role: "admin", department: "Central Administration",
-        adminCode: "CAMPUSBUZZ-ADMIN-2025", isVerified: true,
+        adminCode: "AEH-ADMIN-2025", isVerified: true,
       },
     ]);
 

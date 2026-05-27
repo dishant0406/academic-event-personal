@@ -116,7 +116,7 @@ export default function Home() {
           <a href="/calendar">Calendar</a>
         </div>
         <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
-          {user ? (
+          {user && (
             <>
               <button className="btn btn-ghost btn-sm" onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
                 Dashboard
@@ -124,11 +124,6 @@ export default function Home() {
               <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--accent-primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", cursor: "pointer" }} onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
                 {user.fullName.charAt(0)}
               </div>
-            </>
-          ) : (
-            <>
-              <button className="btn btn-ghost btn-sm" onClick={() => router.push("/login")}>Login</button>
-              <button className="btn btn-primary btn-sm" onClick={() => router.push("/signup")}>Sign Up</button>
             </>
           )}
         </div>

@@ -89,4 +89,52 @@ router.patch("/preferences", protect, async (req, res) => {
   }
 });
 
+// ═══════════════════════════════════════════════════════════════════════════
+// GET /api/users/dashboard  — Dashboard data (registered, recommended, bookmarks)
+// ═══════════════════════════════════════════════════════════════════════════
+router.get("/dashboard", protect, async (req, res) => {
+  try {
+    const userId = req.user._id;
+    
+    // 1. Registered Events
+    const registeredEvents = await Event.find({ registeredUsers: userId }).lean();
+    
+    // 2. Bookmarked Events
+    const user = await User.findById(userId).populate("bookmarks").lean();
+    const bookmarkedEvents = user.bookmarks || [];
+    
+    // 3. Recommended Events
+    const subjects = user.subscribedSubjects || [];
+    let query = { status: "approved", date: { $gte: new Date() } };
+    
+    let recommendedEvents = [];
+    if (subjects.length > 0) {
+      query.$or = [
+        { department: { $in: subjects.map(s => new RegExp(s, 'i')) } },
+        { tags: { $in: subjects.map(s => new RegExp(s, 'i')) } },
+        { subjectTags: { $in: subjects.map(s => new RegExp(s, 'i')) } }
+      ];
+      recommendedEvents = await Event.find(query).sort({ date: 1 }).limit(6).lean();
+    }
+    
+    // Fallback if no specific recommendations found
+    if (recommendedEvents.length === 0) {
+      recommendedEvents = await Event.find({ status: "approved", date: { $gte: new Date() } })
+        .sort({ date: 1 })
+        .limit(6)
+        .lean();
+    }
+
+    res.status(200).json({
+      success: true,
+      registeredEvents,
+      bookmarkedEvents,
+      recommendedEvents
+    });
+  } catch (error) {
+    console.error("Dashboard Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch dashboard data." });
+  }
+});
+
 module.exports = router;

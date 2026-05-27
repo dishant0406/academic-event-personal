@@ -6,9 +6,12 @@ function fmtDate(d) {
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-const INTERESTS = ["Physics", "Computer Science", "AI/ML", "Mathematics", "Agriculture"];
-
 export default function StudentDashboard() {
+  const [userInterests, setUserInterests] = useState(["Physics", "Computer Science", "AI/ML", "Mathematics", "Agriculture"]);
+  
+  // Extract all unique tags from EVENTS to use as options
+  const allTags = Array.from(new Set(EVENTS.flatMap(e => e.tags || []))).map(t => t.charAt(0).toUpperCase() + t.slice(1));
+  const availableInterests = allTags.filter(tag => !userInterests.map(i => i.toLowerCase()).includes(tag.toLowerCase()));
   const [bookmarks, setBookmarks] = useState(new Set([1, 5, 9]));
   const [registered, setRegistered] = useState(new Set([2, 5]));
   const [selectedEvent, setSelectedEvent] = useState(null);
@@ -67,11 +70,36 @@ export default function StudentDashboard() {
       {/* My Interests */}
       <div style={{ marginBottom: 32 }}>
         <h3 style={{ fontFamily: "Inter,sans-serif", fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Your Interests</h3>
-        <div style={{ display: "flex", gap: 8, flexWrap: "wrap" }}>
-          {INTERESTS.map(i => (
-            <span key={i} className="filter-chip active">{i}</span>
+        <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+          {userInterests.map(i => (
+            <span key={i} className="filter-chip active" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+              {i}
+              <button 
+                onClick={() => setUserInterests(userInterests.filter(ui => ui !== i))}
+                style={{ background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: 0, fontSize: "0.8rem", opacity: 0.7 }}
+                title="Remove interest"
+              >
+                ×
+              </button>
+            </span>
           ))}
-          <span className="filter-chip" style={{ borderStyle: "dashed" }}>+ Add more</span>
+          {availableInterests.length > 0 && (
+            <select 
+              className="filter-chip" 
+              style={{ borderStyle: "dashed", background: "transparent", cursor: "pointer", outline: "none", paddingRight: "8px" }}
+              onChange={(e) => {
+                if(e.target.value) {
+                  setUserInterests([...userInterests, e.target.value]);
+                  e.target.value = "";
+                }
+              }}
+            >
+              <option value="">+ Add more</option>
+              {availableInterests.map(tag => (
+                <option key={tag} value={tag} style={{ color: "#000" }}>{tag}</option>
+              ))}
+            </select>
+          )}
         </div>
       </div>
 

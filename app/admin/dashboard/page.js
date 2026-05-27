@@ -24,7 +24,10 @@ export default function AdminDashboard() {
 
       if (!response.ok) {
          if (response.status === 401 || response.status === 403) {
-             throw new Error("Unauthorized access. Admin privileges required.");
+             localStorage.removeItem('token');
+             localStorage.removeItem('currentUser');
+             window.location.href = '/login';
+             return;
          }
          throw new Error('Failed to fetch pending events');
       }

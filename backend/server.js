@@ -1,5 +1,5 @@
 /**
- * CampusBuzz API Server — Production-grade, 10 000-concurrent-user capable
+ * Academic Events Hub (AEH) API Server — Production-grade, 10 000-concurrent-user capable
  *
  * Architecture highlights
  * ─────────────────────────────────────────────────────────────────────────
@@ -21,7 +21,7 @@ const process = require("process");
 // ─── CLUSTER: primary forks one worker per CPU ────────────────────────────
 if (cluster.isPrimary) {
   const numCPUs = os.cpus().length;
-  console.log(`\n⚡ CampusBuzz Master  PID=${process.pid}  CPUs=${numCPUs}`);
+  console.log(`\n⚡ Academic Events Hub (AEH) Master  PID=${process.pid}  CPUs=${numCPUs}`);
   console.log(`   Spawning ${numCPUs} worker(s)…\n`);
 
   for (let i = 0; i < numCPUs; i++) cluster.fork();
@@ -128,7 +128,7 @@ async function startWorker() {
   app.get("/api/health", (req, res) => {
     res.status(200).json({
       success: true,
-      message: "⚡ CampusBuzz API is running",
+      message: "⚡ Academic Events Hub (AEH) API is running",
       worker: process.pid,
       uptime: Math.floor(process.uptime()),
       memory: process.memoryUsage().rss,

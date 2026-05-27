@@ -6,10 +6,10 @@ export default function AdminSettings() {
       <div className="form-container" style={{ maxWidth: "100%" }}>
         <h3 style={{ fontFamily: "Inter,sans-serif", fontSize: "1rem", marginBottom: 20 }}>General Settings</h3>
         <div className="form-group"><label className="form-label">University Name</label><input className="form-input" defaultValue="Indian Institute of Technology (BHU) Varanasi" /></div>
-        <div className="form-group"><label className="form-label">Platform Name</label><input className="form-input" defaultValue="CampusBuzz" /></div>
+        <div className="form-group"><label className="form-label">Platform Name</label><input className="form-input" defaultValue="Academic Events Hub (AEH)" /></div>
         <div className="form-row">
           <div className="form-group"><label className="form-label">Admin Email</label><input className="form-input" defaultValue="admin@iitbhu.ac.in" /></div>
-          <div className="form-group"><label className="form-label">Support Email</label><input className="form-input" defaultValue="support@campusbuzz.in" /></div>
+          <div className="form-group"><label className="form-label">Support Email</label><input className="form-input" defaultValue="support@aeh.in" /></div>
         </div>
         <h3 style={{ fontFamily: "Inter,sans-serif", fontSize: "1rem", marginBottom: 20, marginTop: 32, paddingTop: 24, borderTop: "1px solid var(--border)" }}>Event Settings</h3>
         <div className="form-row">

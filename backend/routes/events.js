@@ -1,9 +1,40 @@
 const express = require("express");
 const mongoose = require("mongoose");
 const Event = require("../models/Event");
+const User = require("../models/User");
 const { protect, authorize } = require("../middleware/auth");
+const { sendEventAlerts } = require("../utils/emailService");
 
 const router = express.Router();
+
+// Helper to notify users when an event is approved
+const notifySubscribedUsers = async (event) => {
+  try {
+    // Collect all terms that identify this event's subjects
+    const eventTags = [
+      event.department,
+      ...(event.tags || []),
+      ...(event.subjectTags || [])
+    ].filter(Boolean);
+
+    // Build regex to match case-insensitively
+    const matchRegexes = eventTags.map(tag => new RegExp(`^${tag}$`, 'i'));
+
+    // Find users subscribed to any of these subjects
+    const users = await User.find({
+      subscribedSubjects: { $in: matchRegexes }
+    }, "email").lean();
+
+    const emails = users.map(u => u.email).filter(Boolean);
+    
+    if (emails.length > 0) {
+      // Fire and forget (don't await to avoid blocking the API)
+      sendEventAlerts(emails, event);
+    }
+  } catch (error) {
+    console.error("Failed to notify users:", error);
+  }
+};
 
 // ─── Shared field projection — never send unneeded data to clients ─────────
 const EVENT_PUBLIC_FIELDS = "title description type department faculty date endDate time venue speaker capacity registrations tags color featured status createdBy";
@@ -104,6 +135,11 @@ router.post("/", protect, authorize("faculty", "admin"), async (req, res) => {
     };
 
     const event = await Event.create(eventData);
+
+    // If admin created it, it's instantly approved, so trigger alerts
+    if (event.status === "approved") {
+      notifySubscribedUsers(event);
+    }
 
     res.status(201).json({
       success: true,
@@ -244,6 +280,11 @@ router.put("/:id/status", protect, authorize("admin"), async (req, res) => {
     ).lean();
 
     if (!event) return res.status(404).json({ success: false, message: "Event not found." });
+
+    // If it was just approved, trigger the alerts
+    if (status === "approved") {
+      notifySubscribedUsers(event);
+    }
 
     res.status(200).json({ success: true, message: `Event ${status}.`, event });
   } catch (error) {

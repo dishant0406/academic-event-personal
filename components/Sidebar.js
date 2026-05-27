@@ -69,7 +69,7 @@ export default function Sidebar({ role }) {
     <aside className="sidebar">
       <div className="sidebar-brand" onClick={() => router.push("/")} style={{ cursor: "pointer" }}>
         <div className="logo-icon">⚡</div>
-        <span>Campus<span style={{ color: "var(--accent-primary)" }}>Buzz</span></span>
+        <span>Academic Events Hub <span style={{ color: "var(--accent-primary)" }}>(AEH)</span></span>
       </div>
 
       <div className="sidebar-role" style={{ borderColor: config.color + "33", background: config.color + "11" }}>

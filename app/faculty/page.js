@@ -14,6 +14,9 @@ const MY_EVENTS = EVENTS.filter(e => [1, 2, 4, 9].includes(e.id)).map(e => ({
 
 export default function FacultyDashboard() {
   const [tab, setTab] = useState("dashboard");
+  const [facultyInterests, setFacultyInterests] = useState(["Machine Learning", "AI/ML"]);
+  const allTags = Array.from(new Set(EVENTS.flatMap(e => e.tags || []))).map(t => t.charAt(0).toUpperCase() + t.slice(1));
+  const availableInterests = allTags.filter(tag => !facultyInterests.map(i => i.toLowerCase()).includes(tag.toLowerCase()));
   const [toast, setToast] = useState(null);
   const [user, setUser] = useState(null);
   const [form, setForm] = useState({ title: "", description: "", type: "seminar", department: DEPARTMENTS[1], date: "", endDate: "", time: "", venue: "", speaker: "", tags: "" });
@@ -63,6 +66,41 @@ export default function FacultyDashboard() {
                 </div>
               </div>
             ))}
+          </div>
+
+          <div style={{ marginBottom: 32 }}>
+            <h3 style={{ fontFamily: "Inter,sans-serif", fontSize: "1rem", marginBottom: 16 }}>🎯 Your Interests</h3>
+            <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
+              {facultyInterests.map(i => (
+                <span key={i} className="filter-chip active" style={{ display: "flex", alignItems: "center", gap: "6px" }}>
+                  {i}
+                  <button 
+                    onClick={() => setFacultyInterests(facultyInterests.filter(ui => ui !== i))}
+                    style={{ background: "transparent", border: "none", color: "inherit", cursor: "pointer", padding: 0, fontSize: "0.8rem", opacity: 0.7 }}
+                    title="Remove interest"
+                  >
+                    ×
+                  </button>
+                </span>
+              ))}
+              {availableInterests.length > 0 && (
+                <select 
+                  className="filter-chip" 
+                  style={{ borderStyle: "dashed", background: "transparent", cursor: "pointer", outline: "none", paddingRight: "8px" }}
+                  onChange={(e) => {
+                    if(e.target.value) {
+                      setFacultyInterests([...facultyInterests, e.target.value]);
+                      e.target.value = "";
+                    }
+                  }}
+                >
+                  <option value="">+ Add more</option>
+                  {availableInterests.map(tag => (
+                    <option key={tag} value={tag} style={{ color: "#000" }}>{tag}</option>
+                  ))}
+                </select>
+              )}
+            </div>
           </div>
 
           <h3 style={{ fontFamily: "Inter,sans-serif", fontSize: "1rem", marginBottom: 16 }}>📋 My Events Performance</h3>
