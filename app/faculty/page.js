@@ -198,29 +198,48 @@ export default function FacultyDashboard() {
             <input className="form-input" placeholder="e.g. Prof. Arun Kumar" value={form.speaker} onChange={e => set("speaker", e.target.value)} />
           </div>
           <div className="form-group">
-            <label className="form-label">Tags (comma-separated)</label>
-            <input className="form-input" placeholder="e.g. AI, machine learning, workshop" value={form.tags} onChange={e => set("tags", e.target.value)} />
+            <label className="form-label">Primary Topic / Domain</label>
+            <select className="form-select" value={form.tags} onChange={e => set("tags", e.target.value)}>
+              <option value="" disabled>Select a domain...</option>
+              {["Artificial Intelligence", "Machine Learning", "Data Science", "Cybersecurity", "Cloud Computing", "Quantum Computing", "Blockchain", "Internet of Things (IoT)", "Robotics", "Software Engineering", "Mathematics", "Physics", "General Science"].map(d => <option key={d} value={d}>{d}</option>)}
+            </select>
           </div>
           <button className="btn btn-primary btn-lg" style={{ width: "100%", justifyContent: "center", background: "#10b981" }}
-            onClick={() => { 
+            onClick={async () => { 
               if (!form.title || !form.date) return showToast("⚠️ Fill required fields"); 
               
-              // Save to localStorage so Admin page can see it
-              const newEvent = {
-                id: Date.now(),
-                title: form.title,
-                dept: form.department,
-                submittedBy: "Dr. Priya Sharma", // Mock faculty name
-                date: form.date,
-                type: form.type
-              };
-              const existing = JSON.parse(localStorage.getItem("pendingEvents") || "[]");
-              localStorage.setItem("pendingEvents", JSON.stringify([...existing, newEvent]));
-              
-              setForm({ title: "", description: "", type: "seminar", department: DEPARTMENTS[1], date: "", endDate: "", time: "", venue: "", speaker: "", tags: "" });
-              showToast("✅ Event submitted for admin review!"); 
+              try {
+                const token = localStorage.getItem("token");
+                const res = await fetch("http://localhost:5000/api/events", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    Authorization: `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    title: form.title,
+                    description: form.description,
+                    type: form.type,
+                    department: form.department,
+                    date: form.date,
+                    endDate: form.endDate,
+                    time: form.time,
+                    venue: form.venue,
+                    speaker: form.speaker,
+                    tags: form.tags ? [form.tags] : [],
+                    capacity: 100 // default
+                  })
+                });
+
+                if (!res.ok) throw new Error("Failed to create event");
+                
+                setForm({ title: "", description: "", type: "seminar", department: DEPARTMENTS[1], date: "", endDate: "", time: "", venue: "", speaker: "", tags: "" });
+                showToast("✅ Event created and added to calendar!"); 
+              } catch (err) {
+                showToast("❌ Error creating event");
+              }
             }}>
-            Submit for Review →
+            Create & Publish Event →
           </button>
         </div>
       )}

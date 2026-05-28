@@ -47,6 +47,7 @@ export default function SignupPage() {
     if (!form.password || form.password.length < 6) { showToast("⚠️ Password must be at least 6 characters"); return; }
     if (form.password !== form.confirmPassword) { showToast("⚠️ Passwords do not match"); return; }
     if (role === "admin" && !form.adminCode.trim()) { showToast("⚠️ Please enter your admin authorization code"); return; }
+    if (role === "faculty" && !form.designation) { showToast("⚠️ Please select your designation"); return; }
 
     setLoading(true);
     try {
@@ -205,7 +206,8 @@ export default function SignupPage() {
                 <div className="form-group">
                   <label className="form-label">Designation *</label>
                   <select className="form-select" value={form.designation} onChange={e => set("designation", e.target.value)}>
-                    {["Assistant Professor", "Associate Professor", "Professor", "Visiting Faculty", "Guest Lecturer"].map(d => <option key={d}>{d}</option>)}
+                    <option value="" disabled>Select Designation</option>
+                    {["Assistant Professor", "Associate Professor", "Professor", "Visiting Faculty", "Guest Lecturer", "Guest Professor", "Other"].map(d => <option key={d} value={d}>{d}</option>)}
                   </select>
                 </div>
                 <div className="form-group">

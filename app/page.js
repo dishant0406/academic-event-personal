@@ -59,6 +59,31 @@ export default function Home() {
     return () => clearTimeout(timer);
   }, [searchQuery]);
 
+  const [recommendedEvents, setRecommendedEvents] = useState([]);
+
+  // Fetch Recommended Events based on user interests
+  useEffect(() => {
+    if (!user || (!user.interests?.length && !user.subscribedSubjects?.length)) return;
+    
+    const fetchRecommended = async () => {
+      try {
+        const res = await fetch("http://localhost:5000/api/events?limit=50");
+        const data = await res.json();
+        if (data.success) {
+          const userInterests = [...(user.interests || []), ...(user.subscribedSubjects || [])].map(i => i.toLowerCase());
+          const matching = data.events.filter(e => {
+            if (!e.tags || e.tags.length === 0) return false;
+            return e.tags.some(tag => userInterests.includes(tag.toLowerCase()));
+          });
+          setRecommendedEvents(matching.slice(0, 3)); // Show top 3 recommended
+        }
+      } catch (err) {
+        console.error("Failed to fetch recommended events", err);
+      }
+    };
+    fetchRecommended();
+  }, [user]);
+
   // Fetch Upcoming Events (when filters or page changes)
   useEffect(() => {
     const fetchUpcoming = async () => {
@@ -180,6 +205,45 @@ export default function Home() {
                     <div className="event-card-meta">
                       <span className="event-card-dept">🏫 {e.department}</span>
                       <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontFamily: "Inter,sans-serif" }}>{e.registrations || 0}+ registered</span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* RECOMMENDED FOR YOU */}
+      {user && recommendedEvents.length > 0 && (
+        <section className="section" style={{ background: "rgba(16, 185, 129, 0.03)" }}>
+          <div style={{ maxWidth: 1280, margin: "0 auto" }}>
+            <div className="section-header" style={{ marginBottom: "2rem" }}>
+              <h2>🎯 Recommended For You</h2>
+              <p>Based on your interests and research domains</p>
+            </div>
+            <div className="events-grid">
+              {recommendedEvents.map(e => (
+                <div key={e._id} className="event-card" onClick={() => router.push(`/events/${e._id}`)} style={{ border: "1px solid #10b981", cursor: "pointer" }}>
+                  <div className="event-card-banner" style={{ background: `linear-gradient(135deg, ${e.color || '#10b981'}22, ${e.color || '#10b981'}08)` }}>
+                    <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: "3rem", opacity: 0.3 }}>
+                      ✨
+                    </div>
+                    <span className={`event-card-type type-${e.type}`}>{e.type}</span>
+                  </div>
+                  <div className="event-card-body">
+                    <div className="event-card-date">📅 {fmtDate(e.date)}</div>
+                    <h3 className="event-card-title">{e.title}</h3>
+                    <div className="event-card-meta" style={{ marginTop: "0.5rem", marginBottom: "0.5rem", color: "var(--text-secondary)", fontSize: "0.85rem", display: "flex", flexDirection: "column", gap: "4px" }}>
+                      <span>🕒 {e.time || 'Time TBA'}</span>
+                      <span>📍 {e.venue || 'Venue TBA'}</span>
+                    </div>
+                    <p className="event-card-desc" style={{ marginTop: "0" }}>{e.description}</p>
+                    <div className="event-card-meta">
+                      <span className="event-card-dept">🏫 {e.department}</span>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontFamily: "Inter,sans-serif", background: "#10b98122", color: "#10b981", padding: "2px 8px", borderRadius: "10px" }}>
+                        Matches your interests
+                      </span>
                     </div>
                   </div>
                 </div>

@@ -131,7 +131,7 @@ router.post("/", protect, authorize("faculty", "admin"), async (req, res) => {
     const eventData = {
       ...req.body,
       createdBy: req.user._id,
-      status: req.user.role === "admin" ? "approved" : "pending",
+      status: "approved", // Auto-approve for demo so they show in calendar
     };
 
     const event = await Event.create(eventData);
