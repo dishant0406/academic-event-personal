@@ -59,7 +59,7 @@ export default function LoginPage() {
         <div className="auth-header">
           <div className="auth-logo" onClick={() => router.push("/")} style={{ cursor: "pointer" }}>
             <div className="logo-icon">⚡</div>
-            <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.5rem", fontWeight: 700, textTransform: "uppercase" }}>
+            <span style={{ fontFamily: "'Plus Jakarta Sans', sans-serif", fontSize: "1.5rem", fontWeight: 700, textTransform: "uppercase" }}>
               Academic Events <span style={{ color: "var(--accent-primary)" }}>Hub</span>
             </span>
           </div>
@@ -98,7 +98,7 @@ export default function LoginPage() {
           <div className="form-group">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <label className="form-label" style={{ marginBottom: 0 }}>Password</label>
-              <a href="#" style={{ fontSize: "0.8rem", color: "var(--accent-primary)", fontFamily: "Inter,sans-serif" }}>Forgot password?</a>
+              <a href="#" style={{ fontSize: "0.8rem", color: "var(--accent-primary)", fontFamily: "Plus Jakarta Sans,sans-serif" }}>Forgot password?</a>
             </div>
             <input
               className="form-input"

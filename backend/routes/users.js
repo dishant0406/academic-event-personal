@@ -64,15 +64,19 @@ router.post("/bookmarks/:id", protect, async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 router.patch("/preferences", protect, async (req, res) => {
   try {
-    const { subscribedSubjects } = req.body;
+    const { subscribedSubjects, interests } = req.body;
 
-    if (!Array.isArray(subscribedSubjects)) {
-      return res.status(400).json({ success: false, message: "subscribedSubjects must be an array." });
+    let updateFields = {};
+    if (Array.isArray(subscribedSubjects)) updateFields.subscribedSubjects = subscribedSubjects;
+    if (Array.isArray(interests)) updateFields.interests = interests;
+
+    if (Object.keys(updateFields).length === 0) {
+      return res.status(400).json({ success: false, message: "No valid arrays provided." });
     }
 
     const updatedUser = await User.findByIdAndUpdate(
       req.user._id,
-      { subscribedSubjects },
+      updateFields,
       { new: true }
     );
 
@@ -81,7 +85,8 @@ router.patch("/preferences", protect, async (req, res) => {
     res.status(200).json({
       success: true,
       message: "Preferences updated.",
-      subscribedSubjects: updatedUser.subscribedSubjects
+      subscribedSubjects: updatedUser.subscribedSubjects,
+      interests: updatedUser.interests
     });
   } catch (error) {
     console.error("Preferences Update Error:", error);

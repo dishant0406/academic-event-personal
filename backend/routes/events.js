@@ -20,13 +20,32 @@ const notifySubscribedUsers = async (event) => {
     // Build regex to match case-insensitively
     const matchRegexes = eventTags.map(tag => new RegExp(`^${tag}$`, 'i'));
 
-    // Find users subscribed to any of these subjects
+    // Find users subscribed to any of these subjects or interests
     const users = await User.find({
-      subscribedSubjects: { $in: matchRegexes }
-    }, "email").lean();
+      $or: [
+        { subscribedSubjects: { $in: matchRegexes } },
+        { interests: { $in: matchRegexes } }
+      ]
+    }, "_id email").lean();
 
     const emails = users.map(u => u.email).filter(Boolean);
+    const userIds = users.map(u => u._id);
     
+    if (userIds.length > 0) {
+      await User.updateMany(
+        { _id: { $in: userIds } },
+        { 
+          $push: { 
+            notifications: { 
+              type: "new_event", 
+              message: `New event matches your interests: ${event.title}`, 
+              relatedEvent: event._id 
+            } 
+          } 
+        }
+      );
+    }
+
     if (emails.length > 0) {
       // Fire and forget (don't await to avoid blocking the API)
       sendEventAlerts(emails, event);

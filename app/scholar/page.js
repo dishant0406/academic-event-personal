@@ -8,11 +8,6 @@ function fmtDate(d) {
 
 const RESEARCH_DOMAINS = ["Quantum Computing", "Machine Learning", "Neuroscience", "Ayurveda", "Computational Linguistics", "Climate Change", "Drone Technology", "Mathematics"];
 
-const RECORDINGS = [
-  { id: 101, title: "Advances in Quantum Error Correction — Prof. Arun Kumar", date: "2025-05-10", department: "Dept. of Physics", duration: "1h 45m", views: 423 },
-  { id: 102, title: "Introduction to Transformer Architectures — Dr. Priya Sharma", date: "2025-05-05", department: "Dept. of Computer Science", duration: "2h 10m", views: 891 },
-  { id: 103, title: "Paninian Grammar & NLP — Prof. Amba Kulkarni", date: "2025-04-28", department: "Dept. of Sanskrit", duration: "1h 20m", views: 234 },
-];
 
 export default function ScholarDashboard() {
   const [search, setSearch] = useState("");
@@ -54,7 +49,6 @@ export default function ScholarDashboard() {
       <div className="stats-grid">
         {[
           { value: saved.size, label: "Saved Events", color: "#8b5cf6", icon: "⭐" },
-          { value: RECORDINGS.length, label: "Recordings Available", color: "#06b6d4", icon: "🎬" },
           { value: EVENTS.length, label: "Upcoming Events", color: "#10b981", icon: "📅" },
           { value: "8", label: "Departments Following", color: "#f59e0b", icon: "🏛️" },
         ].map(s => (
@@ -71,7 +65,7 @@ export default function ScholarDashboard() {
       </div>
 
       <div className="tabs" style={{ marginBottom: 28 }}>
-        {["feed", "advanced search", "cross-department", "recordings"].map(t => (
+        {["feed", "advanced search", "cross-department"].map(t => (
           <button key={t} className={`tab ${tab === t ? "active" : ""}`} onClick={() => setTab(t)}>
             {t.charAt(0).toUpperCase() + t.slice(1)}
           </button>
@@ -171,23 +165,6 @@ export default function ScholarDashboard() {
         </>
       )}
 
-      {tab === "recordings" && (
-        <>
-          <p style={{ color: "var(--text-secondary)", marginBottom: 20 }}>Access recordings and materials from past events</p>
-          <div className="activity-list">
-            {RECORDINGS.map(r => (
-              <div key={r.id} className="activity-item">
-                <div style={{ fontSize: "1.5rem" }}>🎬</div>
-                <div className="activity-content">
-                  <div className="activity-title">{r.title}</div>
-                  <div className="activity-meta">{fmtDate(r.date)} · {r.department} · ⏱️ {r.duration} · 👁️ {r.views} views</div>
-                </div>
-                <button className="btn btn-primary btn-sm" style={{ background: "#8b5cf6" }}>▶ Watch</button>
-              </div>
-            ))}
-          </div>
-        </>
-      )}
     </>
   );
 }

@@ -70,10 +70,10 @@ export default function Home() {
         const res = await fetch("http://localhost:5000/api/events?limit=50");
         const data = await res.json();
         if (data.success) {
-          const userInterests = [...(user.interests || []), ...(user.subscribedSubjects || [])].map(i => i.toLowerCase());
+          const userinterests = [...(user.interests || []), ...(user.subscribedSubjects || [])].map(i => i.toLowerCase());
           const matching = data.events.filter(e => {
             if (!e.tags || e.tags.length === 0) return false;
-            return e.tags.some(tag => userInterests.includes(tag.toLowerCase()));
+            return e.tags.some(tag => userinterests.includes(tag.toLowerCase()));
           });
           setRecommendedEvents(matching.slice(0, 3)); // Show top 3 recommended
         }
@@ -204,7 +204,7 @@ export default function Home() {
                     <p className="event-card-desc" style={{ marginTop: "0" }}>{e.description}</p>
                     <div className="event-card-meta">
                       <span className="event-card-dept">🏫 {e.department}</span>
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontFamily: "Inter,sans-serif" }}>{e.registrations || 0}+ registered</span>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontFamily: "Plus Jakarta Sans,sans-serif" }}>{e.registrations || 0}+ registered</span>
                     </div>
                   </div>
                 </div>
@@ -241,7 +241,7 @@ export default function Home() {
                     <p className="event-card-desc" style={{ marginTop: "0" }}>{e.description}</p>
                     <div className="event-card-meta">
                       <span className="event-card-dept">🏫 {e.department}</span>
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontFamily: "Inter,sans-serif", background: "#10b98122", color: "#10b981", padding: "2px 8px", borderRadius: "10px" }}>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontFamily: "Plus Jakarta Sans,sans-serif", background: "#10b98122", color: "#10b981", padding: "2px 8px", borderRadius: "10px" }}>
                         Matches your interests
                       </span>
                     </div>
@@ -351,7 +351,7 @@ export default function Home() {
                     <p className="event-card-desc" style={{ marginTop: "0" }}>{e.description}</p>
                     <div className="event-card-meta">
                       <span className="event-card-dept">🏫 {e.department}</span>
-                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontFamily: "Inter,sans-serif" }}>{e.registrations || 0}+ registered</span>
+                      <span style={{ fontSize: "0.8rem", color: "var(--text-secondary)", fontFamily: "Plus Jakarta Sans,sans-serif" }}>{e.registrations || 0}+ registered</span>
                     </div>
                   </div>
                 </div>
@@ -388,8 +388,8 @@ export default function Home() {
           <p>Built for the unique needs of large universities</p>
         </div>
         <div className="features-grid">
-          {FEATURES.map(f => (
-            <div key={f.title} className="feature-card">
+          {FEATURES.map((f, i) => (
+            <div key={f.title} className={`feature-card ${i === 0 ? "bento-large" : i === 1 || i === 2 ? "bento-normal" : i === 3 ? "bento-tall" : "bento-wide"}`}>
               <div className="feature-icon" style={{ background: f.gradient }}>{f.icon}</div>
               <h3>{f.title}</h3>
               <p>{f.description}</p>
