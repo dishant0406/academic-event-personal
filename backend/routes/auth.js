@@ -2,6 +2,8 @@ const express = require("express");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 const { generateToken, protect, invalidateUserCache } = require("../middleware/auth");
+const crypto = require("crypto");
+const sendEmail = require("../utils/sendEmail");
 
 const router = express.Router();
 
@@ -218,6 +220,93 @@ router.put("/profile", protect, async (req, res) => {
   } catch (error) {
     console.error("Profile Update Error:", error);
     res.status(500).json({ success: false, message: "Failed to update profile." });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// POST /api/auth/forgotpassword
+// ═══════════════════════════════════════════════════════════════════════════
+router.post("/forgotpassword", async (req, res) => {
+  try {
+    const user = await User.findOne({ email: req.body.email.toLowerCase() });
+    if (!user) {
+      return res.status(404).json({ success: false, message: "There is no user with that email" });
+    }
+
+    const resetToken = user.getResetPasswordToken();
+    await user.save({ validateBeforeSave: false });
+
+    // Ensure NEXT_PUBLIC_FRONTEND_URL exists or default to localhost
+    const frontendUrl = process.env.NEXT_PUBLIC_FRONTEND_URL || "http://localhost:3000";
+    const resetUrl = `${frontendUrl}/reset-password/${resetToken}`;
+
+    const message = `You are receiving this email because you (or someone else) has requested the reset of a password. Please make a PUT request to: \n\n ${resetUrl}`;
+    const html = `
+      <h2>Academic Events Hub (AEH)</h2>
+      <p>You are receiving this email because you (or someone else) has requested a password reset.</p>
+      <p>Click the button below to reset your password. This link is valid for 10 minutes.</p>
+      <a href="${resetUrl}" style="background-color: #6366f1; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px; display: inline-block;">Reset Password</a>
+    `;
+
+    try {
+      await sendEmail({
+        email: user.email,
+        subject: "AEH Password Reset Token",
+        message,
+        html
+      });
+      res.status(200).json({ success: true, message: "Email sent" });
+    } catch (err) {
+      console.error(err);
+      user.resetPasswordToken = undefined;
+      user.resetPasswordExpire = undefined;
+      await user.save({ validateBeforeSave: false });
+      return res.status(500).json({ success: false, message: "Email could not be sent" });
+    }
+  } catch (err) {
+    console.error("Forgot Password Error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PUT /api/auth/resetpassword/:token
+// ═══════════════════════════════════════════════════════════════════════════
+router.put("/resetpassword/:token", async (req, res) => {
+  try {
+    // Get hashed token
+    const resetPasswordToken = crypto
+      .createHash("sha256")
+      .update(req.params.token)
+      .digest("hex");
+
+    const user = await User.findOne({
+      resetPasswordToken,
+      resetPasswordExpire: { $gt: Date.now() }
+    });
+
+    if (!user) {
+      return res.status(400).json({ success: false, message: "Invalid or expired token" });
+    }
+
+    // Set new password
+    if (!req.body.password || req.body.password.length < 6) {
+      return res.status(400).json({ success: false, message: "Password must be at least 6 characters" });
+    }
+    
+    user.password = req.body.password;
+    user.resetPasswordToken = undefined;
+    user.resetPasswordExpire = undefined;
+    
+    await user.save();
+    
+    // Invalidate cache
+    invalidateUserCache(user._id.toString());
+
+    res.status(200).json({ success: true, message: "Password successfully reset" });
+  } catch (err) {
+    console.error("Reset Password Error:", err);
+    res.status(500).json({ success: false, message: "Server error" });
   }
 });
 

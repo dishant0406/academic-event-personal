@@ -56,7 +56,7 @@ const notifySubscribedUsers = async (event) => {
 };
 
 // ─── Shared field projection — never send unneeded data to clients ─────────
-const EVENT_PUBLIC_FIELDS = "title description type department faculty date endDate time venue speaker capacity registrations tags color featured status createdBy";
+const EVENT_PUBLIC_FIELDS = "title description type department faculty date endDate time venue speaker capacity registrations registeredUsers tags color featured status createdBy";
 
 // ═══════════════════════════════════════════════════════════════════════════
 // GET /api/events  — paginated, filtered list (public)
@@ -79,7 +79,9 @@ router.get("/", async (req, res) => {
     if (department && department !== "All Departments") filter.department = department;
     if (subject && subject !== "All Subjects")      filter.subjectTags = subject;
     if (featured === "true")                        filter.featured   = true;
-    filter.status = status || "approved"; // default: approved only
+    if (status !== "all") {
+      filter.status = status || "approved"; // default: approved only
+    }
 
     if (search) {
       // Use MongoDB text index when available; fall back to $or regex
@@ -158,6 +160,7 @@ router.post("/", protect, authorize("faculty", "admin"), async (req, res) => {
     // If admin created it, it's instantly approved, so trigger alerts
     if (event.status === "approved") {
       notifySubscribedUsers(event);
+      if (req.app.get("io")) req.app.get("io").emit("event_published", event);
     }
 
     res.status(201).json({
@@ -275,6 +278,7 @@ router.post("/:id/register", protect, async (req, res) => {
       return res.status(400).json({ success: false, message: "Registration not available." });
     }
 
+    if (req.app.get("io")) req.app.get("io").emit("registration_update", { eventId: req.params.id });
     res.status(200).json({ success: true, message: "Successfully registered!" });
   } catch (error) {
     console.error("Register Error:", error);
@@ -303,6 +307,7 @@ router.put("/:id/status", protect, authorize("admin"), async (req, res) => {
     // If it was just approved, trigger the alerts
     if (status === "approved") {
       notifySubscribedUsers(event);
+      if (req.app.get("io")) req.app.get("io").emit("event_published", event);
     }
 
     res.status(200).json({ success: true, message: `Event ${status}.`, event });

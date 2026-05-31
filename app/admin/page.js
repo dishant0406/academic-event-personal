@@ -1,72 +1,114 @@
 "use client";
-import { useState, useEffect } from "react";
-import { EVENTS, DEPARTMENTS } from "@/lib/data";
+import { useState, useEffect, useMemo } from "react";
+import { fetchApi } from "@/lib/api";
 
 function fmtDate(d) {
+  if (!d) return "";
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
 }
 
-const PENDING_EVENTS = [
-  { id: 101, title: "Workshop on Blockchain for Supply Chain", dept: "Dept. of Computer Science", submittedBy: "Dr. Vikash Gupta", date: "2025-07-25", type: "workshop" },
-  { id: 102, title: "National Seminar on Sanskrit Pedagogy", dept: "Dept. of Sanskrit", submittedBy: "Prof. Shrinivasa", date: "2025-07-28", type: "seminar" },
-  { id: 103, title: "Guest Lecture: Space Exploration in India", dept: "Dept. of Physics", submittedBy: "Dr. Meena Sinha", date: "2025-08-01", type: "lecture" },
-];
-
-const USERS = [
-  { id: 1, name: "Rahul Sharma", role: "Student", dept: "Computer Science", email: "rahul@bhu.ac.in", events: 5 },
-  { id: 2, name: "Dr. Priya Sharma", role: "Faculty", dept: "Computer Science", email: "priya@bhu.ac.in", events: 3 },
-  { id: 3, name: "Ankit Verma", role: "Scholar", dept: "Physics", email: "ankit@bhu.ac.in", events: 0 },
-  { id: 4, name: "Prof. Rajesh Verma", role: "Faculty", dept: "Physics", email: "rajesh@bhu.ac.in", events: 4 },
-  { id: 5, name: "Sneha Gupta", role: "Student", dept: "Mathematics", email: "sneha@bhu.ac.in", events: 2 },
-  { id: 6, name: "Dr. Anand Mishra", role: "Faculty", dept: "Mathematics", email: "anand@bhu.ac.in", events: 1 },
-];
-
 export default function AdminDashboard() {
   const [tab, setTab] = useState("overview");
-  const [pending, setPending] = useState(PENDING_EVENTS);
   const [toast, setToast] = useState(null);
-  const [featured, setFeatured] = useState(new Set(EVENTS.filter(e => e.featured).map(e => e.id)));
-  const [user, setUser] = useState(null);
   
+  const [events, setEvents] = useState([]);
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [currentUser, setCurrentUser] = useState(null);
+  
+  const [featured, setFeatured] = useState(new Set());
+
   useEffect(() => {
-    // Load events created in the faculty dashboard mock
-    const localPending = JSON.parse(localStorage.getItem("pendingEvents") || "[]");
-    if (localPending.length > 0) {
-      setPending([...localPending, ...PENDING_EVENTS]);
-    }
-    const stored = localStorage.getItem("currentUser");
-    if (stored) setUser(JSON.parse(stored));
+    const fetchAdminData = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        setLoading(false);
+        return;
+      }
+      
+      try {
+        const userRes = await fetchApi("/auth/me");
+        const userData = await userRes.json();
+        if (userData.success) setCurrentUser(userData.user);
+
+        // Fetch all events (including pending & rejected)
+        const eventsRes = await fetchApi("/events?limit=500&status=all");
+        const eventsData = await eventsRes.json();
+        
+        if (eventsData.success) {
+          setEvents(eventsData.events);
+          // Set initial featured set
+          const fSet = new Set();
+          eventsData.events.forEach(e => {
+            if (e.featured) fSet.add(e._id);
+          });
+          setFeatured(fSet);
+        }
+
+        // Fetch all users
+        const usersRes = await fetchApi("/users");
+        const usersData = await usersRes.json();
+        if (usersData.success) {
+          setUsers(usersData.users);
+        }
+      } catch (err) {
+        console.error("Admin fetch error:", err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchAdminData();
   }, []);
 
   const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3000); };
 
-  const removePending = (id) => {
-    setPending(prev => prev.filter(e => e.id !== id));
-    // Also remove from localStorage if it's there
-    const localPending = JSON.parse(localStorage.getItem("pendingEvents") || "[]");
-    const updatedLocal = localPending.filter(e => e.id !== id);
-    localStorage.setItem("pendingEvents", JSON.stringify(updatedLocal));
+  const pending = events.filter(e => e.status === "pending");
+  const DEPARTMENTS = Array.from(new Set(events.map(e => e.department).filter(Boolean)));
+  
+  const totalRegs = events.reduce((s, e) => s + (e.registrations || 0), 0);
+
+  const updateEventStatus = async (id, status) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetchApi(`/events/${id}/status`, {
+        method: "PUT",
+        body: JSON.stringify({ status })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setEvents(prev => prev.map(e => e._id === id ? { ...e, status } : e));
+        showToast(status === "approved" ? "✅ Event approved and published!" : "❌ Event rejected");
+      } else {
+        showToast("⚠️ " + data.message);
+      }
+    } catch (err) {
+      showToast("❌ Failed to update status.");
+    }
   };
 
-  const approveEvent = (id) => {
-    removePending(id);
-    showToast("✅ Event approved and published!");
-  };
-  const rejectEvent = (id) => {
-    removePending(id);
-    showToast("❌ Event rejected");
-  };
-  const toggleFeatured = (id) => {
-    setFeatured(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
-    showToast("⭐ Featured status updated");
+  const toggleFeatured = async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      const res = await fetchApi(`/events/${id}/featured`, {
+        method: "PUT"
+      });
+      if (res.ok) {
+        setFeatured(prev => { const n = new Set(prev); n.has(id) ? n.delete(id) : n.add(id); return n; });
+        showToast("⭐ Featured status updated");
+      }
+    } catch (e) {
+      showToast("❌ Failed to update featured status.");
+    }
   };
 
-  const totalRegs = EVENTS.reduce((s, e) => s + e.registrations, 0);
+  if (loading) {
+     return <div style={{ display: "flex", justifyContent: "center", alignItems: "center", height: "80vh", color: "var(--text-secondary)", fontSize: "1.2rem", fontFamily: "Plus Jakarta Sans,sans-serif" }}>Loading Admin Console...</div>;
+  }
 
   return (
     <>
       <div className="dashboard-header">
-        <h1>Welcome back, {user ? user.fullName.split(" ")[0] : "Admin"}! 🛡️</h1>
+        <h1>Welcome back, {currentUser ? currentUser.fullName?.split(" ")[0] : "Admin"}! 🛡️</h1>
         <p>University-wide event management and analytics</p>
       </div>
 
@@ -85,11 +127,11 @@ export default function AdminDashboard() {
         <>
           <div className="stats-grid">
             {[
-              { value: EVENTS.length, label: "Total Events", color: "#f59e0b", icon: "📋", change: "+12%" },
+              { value: events.length, label: "Total Events", color: "#f59e0b", icon: "📋", change: "+12%" },
               { value: totalRegs.toLocaleString(), label: "Total Registrations", color: "#10b981", icon: "🎫", change: "+28%" },
               { value: pending.length, label: "Pending Approvals", color: "#f43f5e", icon: "⏳", change: "" },
-              { value: USERS.length, label: "Active Users", color: "#6366f1", icon: "👥", change: "+15%" },
-              { value: DEPARTMENTS.length - 1, label: "Departments", color: "#8b5cf6", icon: "🏛️", change: "" },
+              { value: users.length, label: "Active Users", color: "#6366f1", icon: "👥", change: "+15%" },
+              { value: DEPARTMENTS.length, label: "Departments", color: "#8b5cf6", icon: "🏛️", change: "" },
               { value: "94%", label: "Approval Rate", color: "#06b6d4", icon: "✅", change: "+3%" },
             ].map(s => (
               <div key={s.label} className="stat-card">
@@ -107,27 +149,27 @@ export default function AdminDashboard() {
 
           <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 24 }}>
             <div>
-              <h3 style={{ fontFamily: "Inter,sans-serif", fontSize: "1rem", marginBottom: 16 }}>📊 Events by Type</h3>
+              <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "1rem", marginBottom: 16 }}>📊 Events by Type</h3>
               <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", padding: 20 }}>
                 {[
-                  { type: "Conference", count: EVENTS.filter(e=>e.type==="conference").length, color: "#f43f5e" },
-                  { type: "Workshop", count: EVENTS.filter(e=>e.type==="workshop").length, color: "#f59e0b" },
-                  { type: "Seminar", count: EVENTS.filter(e=>e.type==="seminar").length, color: "#6366f1" },
-                  { type: "Lecture", count: EVENTS.filter(e=>e.type==="lecture").length, color: "#10b981" },
-                  { type: "Training", count: EVENTS.filter(e=>e.type==="training").length, color: "#06b6d4" },
+                  { type: "Conference", count: events.filter(e=>e.type==="conference").length, color: "#f43f5e" },
+                  { type: "Workshop", count: events.filter(e=>e.type==="workshop").length, color: "#f59e0b" },
+                  { type: "Seminar", count: events.filter(e=>e.type==="seminar").length, color: "#6366f1" },
+                  { type: "Lecture", count: events.filter(e=>e.type==="lecture").length, color: "#10b981" },
+                  { type: "Training", count: events.filter(e=>e.type==="training").length, color: "#06b6d4" },
                 ].map(t => (
                   <div key={t.type} style={{ display: "flex", alignItems: "center", gap: 12, marginBottom: 14 }}>
-                    <span style={{ fontSize: "0.85rem", width: 80, fontFamily: "Inter,sans-serif", color: "var(--text-secondary)" }}>{t.type}</span>
+                    <span style={{ fontSize: "0.85rem", width: 80, fontFamily: "Plus Jakarta Sans,sans-serif", color: "var(--text-secondary)" }}>{t.type}</span>
                     <div className="progress-bar" style={{ flex: 1 }}>
-                      <div className="progress-fill" style={{ width: `${(t.count / EVENTS.length) * 100}%`, background: t.color }} />
+                      <div className="progress-fill" style={{ width: `${events.length > 0 ? (t.count / events.length) * 100 : 0}%`, background: t.color }} />
                     </div>
-                    <span style={{ fontSize: "0.85rem", fontWeight: 700, fontFamily: "Inter,sans-serif", width: 20 }}>{t.count}</span>
+                    <span style={{ fontSize: "0.85rem", fontWeight: 700, fontFamily: "Plus Jakarta Sans,sans-serif", width: 20 }}>{t.count}</span>
                   </div>
                 ))}
               </div>
             </div>
             <div>
-              <h3 style={{ fontFamily: "Inter,sans-serif", fontSize: "1rem", marginBottom: 16 }}>🔔 Recent Activity</h3>
+              <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "1rem", marginBottom: 16 }}>🔔 Recent Activity</h3>
               <div className="activity-list">
                 {[
                   { text: "Dr. Vikash Gupta submitted 'Blockchain Workshop'", time: "2 hours ago", color: "#f59e0b" },
@@ -151,7 +193,7 @@ export default function AdminDashboard() {
 
       {tab === "approvals" && (
         <>
-          <h3 style={{ fontFamily: "Inter,sans-serif", fontSize: "1rem", marginBottom: 16 }}>⏳ Pending Approvals ({pending.length})</h3>
+          <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "1rem", marginBottom: 16 }}>⏳ Pending Approvals ({pending.length})</h3>
           {pending.length === 0 ? (
             <div style={{ textAlign: "center", padding: 60, color: "var(--text-muted)" }}>
               <div style={{ fontSize: "3rem", marginBottom: 12 }}>✅</div>
@@ -160,16 +202,16 @@ export default function AdminDashboard() {
           ) : (
             <div className="activity-list">
               {pending.map(e => (
-                <div key={e.id} className="activity-item" style={{ flexWrap: "wrap" }}>
+                <div key={e._id} className="activity-item" style={{ flexWrap: "wrap" }}>
                   <div className="activity-dot" style={{ background: "#f59e0b" }} />
                   <div className="activity-content" style={{ flex: 1 }}>
                     <div className="activity-title">{e.title}</div>
-                    <div className="activity-meta">Submitted by {e.submittedBy} · {e.dept} · {fmtDate(e.date)}</div>
+                    <div className="activity-meta">Submitted by {e.createdBy?.fullName || "Faculty"} · {e.department} · {fmtDate(e.date)}</div>
                   </div>
                   <div style={{ display: "flex", gap: 8 }}>
                     <span className={`event-card-type type-${e.type}`} style={{ position: "static" }}>{e.type}</span>
-                    <button className="btn btn-primary btn-sm" style={{ background: "#10b981" }} onClick={() => approveEvent(e.id)}>✅ Approve</button>
-                    <button className="btn btn-ghost btn-sm" style={{ color: "#f43f5e" }} onClick={() => rejectEvent(e.id)}>❌ Reject</button>
+                    <button className="btn btn-primary btn-sm" style={{ background: "#10b981" }} onClick={() => updateEventStatus(e._id, "approved")}>✅ Approve</button>
+                    <button className="btn btn-ghost btn-sm" style={{ color: "#f43f5e" }} onClick={() => updateEventStatus(e._id, "rejected")}>❌ Reject</button>
                   </div>
                 </div>
               ))}
@@ -183,8 +225,8 @@ export default function AdminDashboard() {
           <table className="data-table">
             <thead><tr><th>Event</th><th>Type</th><th>Date</th><th>Registrations</th><th>Status</th><th>Actions</th></tr></thead>
             <tbody>
-              {EVENTS.map(e => (
-                <tr key={e.id}>
+              {events.map(e => (
+                <tr key={e._id}>
                   <td>
                     <div style={{ fontWeight: 600 }}>{e.title.length > 40 ? e.title.slice(0, 40) + "…" : e.title}</div>
                     <div style={{ fontSize: "0.75rem", color: "var(--text-muted)" }}>{e.department}</div>
@@ -194,12 +236,16 @@ export default function AdminDashboard() {
                   <td>
                     <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
                       <div className="progress-bar" style={{ width: 60 }}>
-                        <div className="progress-fill" style={{ width: `${(e.registrations/e.capacity)*100}%`, background: e.color }} />
+                        <div className="progress-fill" style={{ width: `${((e.registrations||0)/(e.capacity||100))*100}%`, background: e.color || '#10b981' }} />
                       </div>
-                      <span style={{ fontSize: "0.8rem" }}>{e.registrations}/{e.capacity}</span>
+                      <span style={{ fontSize: "0.8rem" }}>{e.registrations||0}/{e.capacity||100}</span>
                     </div>
                   </td>
-                  <td><span className="status-badge status-approved">Approved</span></td>
+                  <td>
+                    <span className={`status-badge ${e.status === 'approved' ? 'status-approved' : e.status === 'pending' ? 'status-pending' : 'status-rejected'}`}>
+                      {e.status.charAt(0).toUpperCase() + e.status.slice(1)}
+                    </span>
+                  </td>
                   <td>
                     <div style={{ display: "flex", gap: 4 }}>
                       <button className="btn btn-ghost btn-sm">Edit</button>
@@ -216,20 +262,19 @@ export default function AdminDashboard() {
       {tab === "users" && (
         <div style={{ background: "var(--bg-card)", border: "1px solid var(--border)", borderRadius: "var(--radius-lg)", overflow: "hidden" }}>
           <table className="data-table">
-            <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Email</th><th>Events</th><th>Actions</th></tr></thead>
+            <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Email</th><th>Actions</th></tr></thead>
             <tbody>
-              {USERS.map(u => (
-                <tr key={u.id}>
-                  <td style={{ fontWeight: 600 }}>{u.name}</td>
+              {users.map(u => (
+                <tr key={u._id}>
+                  <td style={{ fontWeight: 600 }}>{u.fullName}</td>
                   <td>
                     <span className="status-badge" style={{
-                      background: u.role === "Student" ? "rgba(99,102,241,0.15)" : u.role === "Faculty" ? "rgba(16,185,129,0.15)" : "rgba(139,92,246,0.15)",
-                      color: u.role === "Student" ? "#6366f1" : u.role === "Faculty" ? "#10b981" : "#8b5cf6"
-                    }}>{u.role}</span>
+                      background: u.role === "student" ? "rgba(99,102,241,0.15)" : u.role === "faculty" ? "rgba(16,185,129,0.15)" : "rgba(139,92,246,0.15)",
+                      color: u.role === "student" ? "#6366f1" : u.role === "faculty" ? "#10b981" : "#8b5cf6"
+                    }}>{u.role.charAt(0).toUpperCase() + u.role.slice(1)}</span>
                   </td>
-                  <td style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{u.dept}</td>
+                  <td style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{u.department || "N/A"}</td>
                   <td style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{u.email}</td>
-                  <td style={{ fontFamily: "Inter,sans-serif" }}>{u.events}</td>
                   <td>
                     <div style={{ display: "flex", gap: 4 }}>
                       <button className="btn btn-ghost btn-sm">Edit</button>
@@ -247,19 +292,19 @@ export default function AdminDashboard() {
         <>
           <p style={{ color: "var(--text-secondary)", marginBottom: 20 }}>Select events to feature on the homepage. Featured events get maximum visibility.</p>
           <div className="activity-list">
-            {EVENTS.map(e => (
-              <div key={e.id} className="activity-item">
-                <div className="activity-dot" style={{ background: e.color }} />
+            {events.filter(e => e.status === "approved").map(e => (
+              <div key={e._id} className="activity-item">
+                <div className="activity-dot" style={{ background: e.color || '#8b5cf6' }} />
                 <div className="activity-content">
                   <div className="activity-title">{e.title}</div>
                   <div className="activity-meta">{e.department} · {fmtDate(e.date)}</div>
                 </div>
                 <div style={{ display: "flex", gap: 8, alignItems: "center" }}>
                   <span className={`event-card-type type-${e.type}`} style={{ position: "static" }}>{e.type}</span>
-                  <button className={`btn ${featured.has(e.id) ? "btn-primary" : "btn-secondary"} btn-sm`}
-                    style={featured.has(e.id) ? { background: "#f59e0b", color: "#1a1a1a" } : {}}
-                    onClick={() => toggleFeatured(e.id)}>
-                    {featured.has(e.id) ? "⭐ Featured" : "☆ Feature"}
+                  <button className={`btn ${featured.has(e._id) ? "btn-primary" : "btn-secondary"} btn-sm`}
+                    style={featured.has(e._id) ? { background: "#f59e0b", color: "#1a1a1a" } : {}}
+                    onClick={() => toggleFeatured(e._id)}>
+                    {featured.has(e._id) ? "⭐ Featured" : "☆ Feature"}
                   </button>
                 </div>
               </div>
@@ -268,7 +313,7 @@ export default function AdminDashboard() {
         </>
       )}
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className="toast"><span>{toast}</span><button className="toast-close" onClick={() => setToast(null)}>×</button></div>}
     </>
   );
 }

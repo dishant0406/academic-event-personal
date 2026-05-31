@@ -2,7 +2,7 @@ const express = require("express");
 const mongoose = require("mongoose");
 const User = require("../models/User");
 const Event = require("../models/Event");
-const { protect, invalidateUserCache } = require("../middleware/auth");
+const { protect, authorize, invalidateUserCache } = require("../middleware/auth");
 
 const router = express.Router();
 
@@ -139,6 +139,19 @@ router.get("/dashboard", protect, async (req, res) => {
   } catch (error) {
     console.error("Dashboard Error:", error);
     res.status(500).json({ success: false, message: "Failed to fetch dashboard data." });
+  }
+});
+
+// ═══════════════════════════════════════════════════════════════════════════
+// GET /api/users  — Fetch all users (Admin only)
+// ═══════════════════════════════════════════════════════════════════════════
+router.get("/", protect, authorize("admin"), async (req, res) => {
+  try {
+    const users = await User.find({}, "fullName email role department").lean();
+    res.status(200).json({ success: true, users });
+  } catch (error) {
+    console.error("Fetch Users Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch users." });
   }
 });
 

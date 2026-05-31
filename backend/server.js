@@ -20,7 +20,8 @@ const process = require("process");
 
 // ─── CLUSTER: primary forks one worker per CPU ────────────────────────────
 if (cluster.isPrimary) {
-  const numCPUs = os.cpus().length;
+  // If development without Redis, force 1 worker so websockets sync correctly
+  const numCPUs = process.env.NODE_ENV === "production" ? os.cpus().length : 1;
   console.log(`\n⚡ Academic Events Hub (AEH) Master  PID=${process.pid}  CPUs=${numCPUs}`);
   console.log(`   Spawning ${numCPUs} worker(s)…\n`);
 
@@ -162,6 +163,32 @@ async function startWorker() {
 
   const server = app.listen(PORT, () => {
     console.log(`✅ Worker ${process.pid} listening on port ${PORT}`);
+  });
+
+  // ─── WebSockets Initialization ────────────────────────────────────────
+  const { Server } = require("socket.io");
+  const io = new Server(server, {
+    cors: {
+      origin: allowedOrigins,
+      methods: ["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"],
+      credentials: true
+    }
+  });
+  
+  // Attach io to the app so routes can use it via req.app.get("io")
+  app.set("io", io);
+
+  io.on("connection", (socket) => {
+    console.log(`[Worker ${process.pid}] New WebSocket connection: ${socket.id}`);
+    
+    // Clients can join rooms based on their roles or IDs to receive targeted notifications
+    socket.on("join", (room) => {
+      socket.join(room);
+    });
+
+    socket.on("disconnect", () => {
+      // Clean up if necessary
+    });
   });
 
   // ─── Tune keep-alive for high concurrency ─────────────────────────────

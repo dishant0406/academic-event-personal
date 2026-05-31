@@ -2,6 +2,8 @@
 import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { FEATURES, DEPARTMENTS, EVENT_TYPES } from "@/lib/data";
+import { fetchApi } from "@/lib/api";
+import { socket } from "@/lib/socket";
 
 function fmtDate(d) {
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
@@ -31,7 +33,7 @@ export default function Home() {
   useEffect(() => {
     const fetchFeatured = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/events?featured=true&limit=3");
+        const res = await fetchApi("/events?featured=true&limit=3");
         const data = await res.json();
         if (data.success) {
           setFeaturedEvents(data.events);
@@ -67,7 +69,7 @@ export default function Home() {
     
     const fetchRecommended = async () => {
       try {
-        const res = await fetch("http://localhost:5000/api/events?limit=50");
+        const res = await fetchApi("/events?limit=50");
         const data = await res.json();
         if (data.success) {
           const userinterests = [...(user.interests || []), ...(user.subscribedSubjects || [])].map(i => i.toLowerCase());
@@ -89,13 +91,13 @@ export default function Home() {
     const fetchUpcoming = async () => {
       setLoading(true);
       try {
-        let url = `http://localhost:5000/api/events?page=${page}&limit=6`;
+        let url = `/events?page=${page}&limit=6`;
         if (typeFilter !== "all") url += `&type=${typeFilter}`;
         if (deptFilter !== "All Departments") url += `&department=${encodeURIComponent(deptFilter)}`;
         if (subjectFilter !== "All Subjects") url += `&subject=${encodeURIComponent(subjectFilter)}`;
         if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
         
-        const res = await fetch(url);
+        const res = await fetchApi(url);
         const data = await res.json();
         
         if (data.success) {
@@ -115,6 +117,26 @@ export default function Home() {
     
     fetchUpcoming();
   }, [typeFilter, deptFilter, subjectFilter, debouncedSearch, page]);
+
+  // Real-time WebSockets setup
+  useEffect(() => {
+    socket.connect();
+    
+    const handleNewEvent = (newEvent) => {
+      setUpcomingEvents(prev => {
+        // Prevent duplicates
+        if (prev.find(e => e._id === newEvent._id)) return prev;
+        return [newEvent, ...prev];
+      });
+    };
+
+    socket.on("event_published", handleNewEvent);
+
+    return () => {
+      socket.off("event_published", handleNewEvent);
+      socket.disconnect();
+    };
+  }, []);
 
   // Handlers for filters
   const handleTypeChange = (e) => {

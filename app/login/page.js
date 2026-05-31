@@ -1,6 +1,7 @@
 "use client";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchApi } from "@/lib/api";
 
 const ROLES = [
   { id: "student", icon: "🎓", label: "Student", color: "#6366f1" },
@@ -25,7 +26,7 @@ export default function LoginPage() {
 
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:5000/api/auth/login", {
+      const res = await fetchApi("/auth/login", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ email: email.trim(), password, role })
@@ -98,7 +99,7 @@ export default function LoginPage() {
           <div className="form-group">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
               <label className="form-label" style={{ marginBottom: 0 }}>Password</label>
-              <a href="#" style={{ fontSize: "0.8rem", color: "var(--accent-primary)", fontFamily: "Plus Jakarta Sans,sans-serif" }}>Forgot password?</a>
+              <a onClick={() => router.push("/forgot-password")} style={{ fontSize: "0.8rem", color: "var(--accent-primary)", fontFamily: "Plus Jakarta Sans,sans-serif", cursor: "pointer" }}>Forgot password?</a>
             </div>
             <input
               className="form-input"
@@ -134,7 +135,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {toast && <div className="toast">{toast}</div>}
+      {toast && <div className="toast"><span>{toast}</span><button className="toast-close" onClick={() => setToast(null)}>×</button></div>}
     </div>
   );
 }
