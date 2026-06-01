@@ -197,6 +197,11 @@ export default function SubmitEventPage() {
                 <label className="form-label" htmlFor="tags">Subject Tags</label>
                 <input type="text" id="tags" name="tags" className="form-input" value={formData.tags} onChange={handleChange} placeholder="e.g. AI, Machine Learning (comma separated)" />
               </div>
+              <div style={{ marginTop: '1rem', padding: '1rem', background: 'rgba(99, 102, 241, 0.1)', borderRadius: '12px', border: '1px solid rgba(99, 102, 241, 0.2)' }}>
+                <p style={{ color: 'var(--accent-primary)', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  <span>ℹ️</span> <strong>Note:</strong> Since you are a student, your event will be marked as "pending" and must be approved by an Administrator before it becomes publicly visible.
+                </p>
+              </div>
             </div>
           )}
         </div>

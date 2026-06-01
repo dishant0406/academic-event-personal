@@ -9,9 +9,14 @@ const ROLE_CONFIG = {
     links: [
       { href: "/student", label: "My Feed", icon: "📰" },
       { href: "/student/discover", label: "Discover", icon: "🔍" },
+      { href: "/student/submit", label: "Create Event", icon: "➕" },
+      { href: "/student/events", label: "My Events", icon: "📋" },
       { href: "/student/calendar", label: "Calendar", icon: "📅" },
       { href: "/student/bookmarks", label: "Bookmarks", icon: "⭐" },
       { href: "/student/registrations", label: "My Registrations", icon: "🎫" },
+      { href: "/student/cross-dept", label: "Cross-Department", icon: "🏛️" },
+      { href: "/student/recordings", label: "Recordings", icon: "🎬" },
+      { href: "/student/search", label: "Advanced Search", icon: "🔍" },
       { href: "/student/certificates", label: "Certificates", icon: "📜" },
       { href: "/student/profile", label: "My Profile", icon: "👤" },
     ],
@@ -29,27 +34,13 @@ const ROLE_CONFIG = {
       { href: "/faculty/profile", label: "My Profile", icon: "👤" },
     ],
   },
-  scholar: {
-    label: "Research Scholar",
-    icon: "🔬",
-    color: "#8b5cf6",
-    links: [
-      { href: "/scholar", label: "Research Feed", icon: "📰" },
-      { href: "/scholar/search", label: "Advanced Search", icon: "🔍" },
-      { href: "/scholar/cross-dept", label: "Cross-Department", icon: "🏛️" },
-      { href: "/scholar/calendar", label: "Calendar", icon: "📅" },
-      { href: "/scholar/saved", label: "Saved Events", icon: "⭐" },
-      { href: "/scholar/recordings", label: "Recordings", icon: "🎬" },
-      { href: "/scholar/profile", label: "My Profile", icon: "👤" },
-    ],
-  },
+
   admin: {
     label: "Administrator",
     icon: "🛡️",
     color: "#f59e0b",
     links: [
       { href: "/admin", label: "Dashboard", icon: "📊" },
-      { href: "/admin/approvals", label: "Approvals", icon: "✅" },
       { href: "/admin/events", label: "All Events", icon: "📋" },
       { href: "/admin/analytics", label: "Analytics", icon: "📈" },
       { href: "/admin/users", label: "User Management", icon: "👥" },

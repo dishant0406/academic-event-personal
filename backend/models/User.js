@@ -24,7 +24,7 @@ const userSchema = new mongoose.Schema(
     },
     role: {
       type: String,
-      enum: ["student", "faculty", "scholar", "admin"],
+      enum: ["student", "faculty", "admin"],
       required: [true, "Role is required"],
     },
     phone: {
@@ -39,14 +39,12 @@ const userSchema = new mongoose.Schema(
     // Student-specific fields
     rollNumber: { type: String },
     year: { type: String },
+    researchDomain: { type: String }, // Optional for non-PhD students
+    supervisor: { type: String }, // Optional for non-PhD students
 
     // Faculty-specific fields
     designation: { type: String },
     facultyId: { type: String },
-
-    // Scholar-specific fields
-    researchDomain: { type: String },
-    supervisor: { type: String },
 
     // Admin-specific fields
     adminCode: { type: String, select: false },

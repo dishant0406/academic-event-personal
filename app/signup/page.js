@@ -3,18 +3,30 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/api";
 
-const DEPARTMENTS = [
-  "Computer Science & Engineering", "Physics", "Mathematics", "Chemistry",
-  "Civil Engineering", "Mechanical Engineering", "Electrical Engineering",
-  "Agricultural Sciences", "Zoology", "Botany", "Sanskrit", "Hindi",
-  "Philosophy", "Ayurveda", "Mining Engineering", "Metallurgy",
-  "Pharmaceutical Sciences", "Biochemistry", "Women's Studies"
-];
+const IITBHU_DATA = {
+  "Computer Science & Engineering": ["Artificial Intelligence", "Machine Learning", "Computer Vision", "Systems and Security", "Theoretical Computer Science"],
+  "Electrical Engineering": ["Power Systems", "Control Systems", "Power Electronics", "Microelectronics", "Electrical Machines"],
+  "Mechanical Engineering": ["Thermal and Fluid Engineering", "Solid Mechanics and Design", "Production Engineering", "Industrial Management"],
+  "Civil Engineering": ["Structural Engineering", "Geotechnical Engineering", "Transportation Engineering", "Hydraulics and Water Resources", "Environmental Engineering"],
+  "Electronics Engineering": ["Communication Systems", "Microwave Engineering", "Microelectronics", "Digital Techniques and Instrumentation"],
+  "Metallurgical Engineering": ["Extractive Metallurgy", "Physical Metallurgy", "Alloy Design", "Materials Processing"],
+  "Mining Engineering": ["Mine Planning", "Rock Mechanics", "Mine Environment", "Mine Surveying"],
+  "Chemical Engineering": ["Transport Phenomena", "Reaction Engineering", "Separation Processes", "Polymer Science"],
+  "Ceramic Engineering": ["Advanced Ceramics", "Glass Technology", "Refractories", "Electronic Ceramics"],
+  "Pharmaceutical Engineering and Technology": ["Pharmaceutics", "Pharmaceutical Chemistry", "Pharmacology", "Pharmacognosy"],
+  "Architecture, Planning & Design": ["Urban Planning", "Sustainable Architecture", "Landscape Architecture", "Town Planning"],
+  "Physics": ["Condensed Matter Physics", "Optics", "Nuclear Physics", "High Energy Physics", "Space Physics", "Quantum Information Theory"],
+  "Chemistry": ["Organic Chemistry", "Inorganic Chemistry", "Physical Chemistry", "Analytical Chemistry"],
+  "Mathematical Sciences": ["Applied Mathematics", "Pure Mathematics", "Statistics", "Operations Research"],
+  "Humanistic Studies": ["English Literature", "Sociology", "Psychology", "Linguistics", "Economics"],
+  "Biomedical Engineering": ["Biomechanics", "Biomaterials", "Medical Imaging", "Biosignal Processing"]
+};
+
+const DEPARTMENTS = [...Object.keys(IITBHU_DATA), "Other"];
 
 const ROLES = [
-  { id: "student", icon: "🎓", label: "Student", color: "#6366f1", desc: "Undergraduate or postgraduate student" },
+  { id: "student", icon: "🎓", label: "Student & Scholar", color: "#6366f1", desc: "Undergraduate, postgraduate, or research scholar" },
   { id: "faculty", icon: "👨‍🏫", label: "Faculty", color: "#10b981", desc: "Professor, lecturer, or teaching staff" },
-  { id: "scholar", icon: "🔬", label: "Research Scholar", color: "#8b5cf6", desc: "Ph.D. or M.Phil. research scholar" },
   { id: "admin", icon: "🛡️", label: "Administrator", color: "#f59e0b", desc: "Department or university admin" },
 ];
 
@@ -24,7 +36,7 @@ export default function SignupPage() {
   const [role, setRole] = useState("");
   const [form, setForm] = useState({
     fullName: "", email: "", password: "", confirmPassword: "",
-    department: DEPARTMENTS[0], rollNumber: "", year: "B.Tech 1st Year",
+    department: "", rollNumber: "", year: "",
     designation: "", facultyId: "", researchDomain: "", supervisor: "",
     adminCode: "", phone: ""
   });
@@ -47,6 +59,8 @@ export default function SignupPage() {
     if (!form.email.trim()) { showToast("⚠️ Please enter your email"); return; }
     if (!form.password || form.password.length < 6) { showToast("⚠️ Password must be at least 6 characters"); return; }
     if (form.password !== form.confirmPassword) { showToast("⚠️ Passwords do not match"); return; }
+    if (role !== "admin" && !form.department) { showToast("⚠️ Please select your department"); return; }
+    if (role === "student" && !form.year) { showToast("⚠️ Please select your program & year"); return; }
     if (role === "admin" && !form.adminCode.trim()) { showToast("⚠️ Please enter your admin authorization code"); return; }
     if (role === "faculty" && !form.designation) { showToast("⚠️ Please select your designation"); return; }
 
@@ -169,7 +183,7 @@ export default function SignupPage() {
             <div className="form-group">
               <label className="form-label">Institutional Email *</label>
               <input className="form-input" type="email"
-                placeholder={role === "student" ? "e.g. rahul.21cs@iitbhu.ac.in" : role === "faculty" ? "e.g. priya.cse@iitbhu.ac.in" : role === "scholar" ? "e.g. ankit.phd@iitbhu.ac.in" : "e.g. admin@iitbhu.ac.in"}
+                placeholder={role === "student" ? "e.g. rahul.21cs@iitbhu.ac.in" : role === "faculty" ? "e.g. priya.cse@iitbhu.ac.in" : "e.g. admin@iitbhu.ac.in"}
                 value={form.email} onChange={e => set("email", e.target.value)} />
             </div>
 
@@ -181,24 +195,55 @@ export default function SignupPage() {
             <div className="form-group">
               <label className="form-label">Department *</label>
               <select className="form-select" value={form.department} onChange={e => set("department", e.target.value)}>
+                <option value="" disabled>Select Department</option>
                 {DEPARTMENTS.map(d => <option key={d}>{d}</option>)}
               </select>
             </div>
 
-            {/* Student-specific */}
+            {/* Student/Scholar-specific */}
             {role === "student" && (
-              <div className="form-row">
-                <div className="form-group">
-                  <label className="form-label">Roll Number *</label>
-                  <input className="form-input" placeholder="e.g. 21CS1045" value={form.rollNumber} onChange={e => set("rollNumber", e.target.value)} />
+              <>
+                <div className="form-row">
+                  <div className="form-group">
+                    <label className="form-label">Roll Number *</label>
+                    <input className="form-input" placeholder="e.g. 21CS1045" value={form.rollNumber} onChange={e => set("rollNumber", e.target.value)} />
+                  </div>
+                  <div className="form-group">
+                    <label className="form-label">Program & Year *</label>
+                    <select className="form-select" value={form.year} onChange={e => set("year", e.target.value)}>
+                      <option value="" disabled>Select Program & Year</option>
+                      {[
+                        "B.Tech 1st Year", "B.Tech 2nd Year", "B.Tech 3rd Year", "B.Tech 4th Year",
+                        "IDD 1st Year", "IDD 2nd Year", "IDD 3rd Year", "IDD 4th Year", "IDD 5th Year",
+                        "M.Tech 1st Year", "M.Tech 2nd Year",
+                        "Ph.D 1st Year", "Ph.D 2nd Year", "Ph.D 3rd Year", "Ph.D 4th Year", "Ph.D 5th Year+",
+                        "Other"
+                      ].map(y => <option key={y}>{y}</option>)}
+                    </select>
+                  </div>
                 </div>
-                <div className="form-group">
-                  <label className="form-label">Year</label>
-                  <select className="form-select" value={form.year} onChange={e => set("year", e.target.value)}>
-                    {["B.Tech 1st Year", "B.Tech 2nd Year", "B.Tech 3rd Year", "B.Tech 4th Year", "M.Tech 1st Year", "M.Tech 2nd Year", "Ph.D 1st Year", "Ph.D 2nd Year", "Ph.D 3rd Year", "Ph.D 4th Year", "Ph.D 5th Year+"].map(y => <option key={y}>{y}</option>)}
-                  </select>
-                </div>
-              </div>
+                
+                {form.year?.startsWith("Ph.D") && (
+                  <div className="form-row">
+                    <div className="form-group">
+                      <label className="form-label">Research Domain (Optional)</label>
+                      {IITBHU_DATA[form.department] ? (
+                        <select className="form-select" value={form.researchDomain} onChange={e => set("researchDomain", e.target.value)}>
+                          <option value="">Select Research Domain</option>
+                          {IITBHU_DATA[form.department].map(d => <option key={d} value={d}>{d}</option>)}
+                          <option value="Other">Other / Interdisciplinary</option>
+                        </select>
+                      ) : (
+                        <input className="form-input" placeholder="e.g. Machine Learning" value={form.researchDomain} onChange={e => set("researchDomain", e.target.value)} />
+                      )}
+                    </div>
+                    <div className="form-group">
+                      <label className="form-label">Supervisor (Optional)</label>
+                      <input className="form-input" placeholder="e.g. Prof. Arun Kumar" value={form.supervisor} onChange={e => set("supervisor", e.target.value)} />
+                    </div>
+                  </div>
+                )}
+              </>
             )}
 
             {/* Faculty-specific */}
@@ -218,19 +263,7 @@ export default function SignupPage() {
               </div>
             )}
 
-            {/* Scholar-specific */}
-            {role === "scholar" && (
-              <>
-                <div className="form-group">
-                  <label className="form-label">Research Domain *</label>
-                  <input className="form-input" placeholder="e.g. Quantum Information Theory, Machine Learning" value={form.researchDomain} onChange={e => set("researchDomain", e.target.value)} />
-                </div>
-                <div className="form-group">
-                  <label className="form-label">Supervisor Name</label>
-                  <input className="form-input" placeholder="e.g. Prof. Arun Kumar" value={form.supervisor} onChange={e => set("supervisor", e.target.value)} />
-                </div>
-              </>
-            )}
+
 
             {/* Admin-specific */}
             {role === "admin" && (

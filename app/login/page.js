@@ -4,10 +4,9 @@ import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/api";
 
 const ROLES = [
-  { id: "student", icon: "🎓", label: "Student", color: "#6366f1" },
+  { id: "student", icon: "🎓", label: "Student & Scholar", color: "#6366f1" },
   { id: "faculty", icon: "👨‍🏫", label: "Faculty", color: "#10b981" },
-  { id: "scholar", icon: "🔬", label: "Research Scholar", color: "#8b5cf6" },
-  { id: "admin", icon: "🛡️", label: "Administrator", color: "#f59e0b" },
+  { id: "admin", icon: "🛡️", label: "Admin", color: "#f59e0b" },
 ];
 
 export default function LoginPage() {

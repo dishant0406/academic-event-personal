@@ -145,14 +145,17 @@ router.get("/:id", async (req, res) => {
 });
 
 // ═══════════════════════════════════════════════════════════════════════════
-// POST /api/events  — create event (Faculty & Admin only)
+// POST /api/events  — create event (Faculty, Admin & Students)
 // ═══════════════════════════════════════════════════════════════════════════
-router.post("/", protect, authorize("faculty", "admin"), async (req, res) => {
+router.post("/", protect, authorize("faculty", "admin", "student"), async (req, res) => {
   try {
+    // Faculty & Admins get auto-approved. Students are set to "pending".
+    const initialStatus = req.user.role === "student" ? "pending" : "approved";
+
     const eventData = {
       ...req.body,
       createdBy: req.user._id,
-      status: "approved", // Auto-approve for demo so they show in calendar
+      status: initialStatus,
     };
 
     const event = await Event.create(eventData);
@@ -165,7 +168,7 @@ router.post("/", protect, authorize("faculty", "admin"), async (req, res) => {
 
     res.status(201).json({
       success: true,
-      message: req.user.role === "admin"
+      message: req.user.role === "admin" || req.user.role === "faculty"
         ? "Event created and published!"
         : "Event submitted for admin review.",
       event,
@@ -183,7 +186,7 @@ router.post("/", protect, authorize("faculty", "admin"), async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 // PUT /api/events/:id  — update event
 // ═══════════════════════════════════════════════════════════════════════════
-router.put("/:id", protect, authorize("faculty", "admin"), async (req, res) => {
+router.put("/:id", protect, authorize("faculty", "admin", "student"), async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ success: false, message: "Invalid event ID." });
@@ -214,7 +217,7 @@ router.put("/:id", protect, authorize("faculty", "admin"), async (req, res) => {
 // ═══════════════════════════════════════════════════════════════════════════
 // DELETE /api/events/:id
 // ═══════════════════════════════════════════════════════════════════════════
-router.delete("/:id", protect, authorize("faculty", "admin"), async (req, res) => {
+router.delete("/:id", protect, authorize("faculty", "admin", "student"), async (req, res) => {
   try {
     if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
       return res.status(400).json({ success: false, message: "Invalid event ID." });
