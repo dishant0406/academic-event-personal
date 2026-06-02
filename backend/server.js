@@ -7,6 +7,7 @@ const helmet       = require("helmet");
 const compression  = require("compression");
 const morgan       = require("morgan");
 const rateLimit    = require("express-rate-limit");
+const dotenv       = require("dotenv");
 const mongoose     = require("mongoose");
 dotenv.config();
 
