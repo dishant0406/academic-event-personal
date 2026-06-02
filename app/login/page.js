@@ -121,14 +121,6 @@ export default function LoginPage() {
           </button>
         </div>
 
-        <div className="auth-divider">
-          <span>or</span>
-        </div>
-
-        <button className="btn btn-secondary btn-lg" style={{ width: "100%", justifyContent: "center" }}>
-          🏛️ Sign in with Institute SSO
-        </button>
-
         <div className="auth-footer">
           <p>Don&apos;t have an account? <a onClick={() => router.push("/signup")} style={{ color: "var(--accent-primary)", cursor: "pointer", fontWeight: 600 }}>Sign up</a></p>
         </div>

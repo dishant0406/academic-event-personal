@@ -146,7 +146,7 @@ export default function SignupPage() {
 
         {/* STEP 1: Role Selection */}
         {step === 1 && (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: "16px", marginTop: "24px" }}>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "12px", marginTop: "24px" }}>
             {ROLES.map(r => (
               <div
                 key={r.id}
@@ -163,9 +163,9 @@ export default function SignupPage() {
                 onMouseEnter={(e) => { e.currentTarget.style.borderColor = r.color; e.currentTarget.style.transform = "translateY(-4px)"; e.currentTarget.style.boxShadow = "0 10px 15px -3px rgba(0, 0, 0, 0.1)"; }}
                 onMouseLeave={(e) => { e.currentTarget.style.borderColor = "var(--border)"; e.currentTarget.style.transform = "none"; e.currentTarget.style.boxShadow = "none"; }}
               >
-                <div style={{ fontSize: "3rem", marginBottom: "12px" }}>{r.icon}</div>
-                <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "1.2rem", fontWeight: 700, marginBottom: "8px", color: r.color }}>{r.label}</h3>
-                <p style={{ fontSize: "0.9rem", color: "var(--text-secondary)", fontFamily: "Outfit, sans-serif", lineHeight: 1.4 }}>{r.desc}</p>
+                <div style={{ fontSize: "2.5rem", marginBottom: "8px" }}>{r.icon}</div>
+                <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "1rem", fontWeight: 700, marginBottom: "4px", color: r.color }}>{r.label}</h3>
+                <p style={{ fontSize: "0.75rem", color: "var(--text-secondary)", fontFamily: "Outfit, sans-serif", lineHeight: 1.3 }}>{r.desc}</p>
               </div>
             ))}
           </div>
