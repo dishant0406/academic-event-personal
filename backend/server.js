@@ -24,12 +24,13 @@ app.use(async (req, res, next) => {
       await mongoose.connect(uri, {
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
+        family: 4, // Force IPv4 (Vercel Serverless fix)
       });
     }
     next();
   } catch (error) {
     console.error("MongoDB Connection Error:", error);
-    res.status(500).json({ success: false, message: "Database connection failed" });
+    res.status(500).json({ success: false, message: "Database connection failed", error: error.message });
   }
 });
 
