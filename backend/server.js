@@ -16,7 +16,11 @@ const app = express();
 app.use(async (req, res, next) => {
   try {
     if (mongoose.connection.readyState !== 1) {
-      await mongoose.connect(process.env.MONGODB_URI, {
+      const uri = process.env.MONGODB_URI && process.env.MONGODB_URI.includes("imashish412_db_user") && !process.env.MONGODB_URI.includes("<db_password>") 
+        ? process.env.MONGODB_URI 
+        : "mongodb://imashish412_db_user:ashish1712@ac-ajcq3fv-shard-00-00.mmhmxki.mongodb.net:27017,ac-ajcq3fv-shard-00-01.mmhmxki.mongodb.net:27017,ac-ajcq3fv-shard-00-02.mmhmxki.mongodb.net:27017/campusbuzz?ssl=true&replicaSet=atlas-d2tpbz-shard-0&authSource=admin&retryWrites=true&w=majority&appName=Cluster0";
+      
+      await mongoose.connect(uri, {
         serverSelectionTimeoutMS: 5000,
         socketTimeoutMS: 45000,
       });
