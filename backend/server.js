@@ -7,15 +7,26 @@ const helmet       = require("helmet");
 const compression  = require("compression");
 const morgan       = require("morgan");
 const rateLimit    = require("express-rate-limit");
-const dotenv       = require("dotenv");
-const { connectDB, closeDB } = require("./config/db");
-
+const mongoose     = require("mongoose");
 dotenv.config();
 
-// Connect to MongoDB
-connectDB();
-
 const app = express();
+
+// Ensure DB connection for Serverless environments (Vercel)
+app.use(async (req, res, next) => {
+  try {
+    if (mongoose.connection.readyState !== 1) {
+      await mongoose.connect(process.env.MONGODB_URI, {
+        serverSelectionTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+      });
+    }
+    next();
+  } catch (error) {
+    console.error("MongoDB Connection Error:", error);
+    res.status(500).json({ success: false, message: "Database connection failed" });
+  }
+});
 
 // Trust proxy for rate limiting (Vercel uses proxies)
 app.set("trust proxy", 1);
