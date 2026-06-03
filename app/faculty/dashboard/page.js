@@ -18,7 +18,7 @@ export default function FacultyDashboard() {
 
       try {
         // Fetch User
-        const userRes = await fetch("http://localhost:5000/api/auth/me", {
+        const userRes = await fetch("https://academic-event-7bk1.vercel.app/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` }
         });
         const userData = await userRes.json();
@@ -33,7 +33,7 @@ export default function FacultyDashboard() {
           // Fetch Faculty's Events (using status filter or just fetch all and filter client side for MVP)
           // To fetch my events properly, backend events API doesn't have a /my-events endpoint yet.
           // Let's fetch all events and filter by createdBy for MVP.
-          const eventsRes = await fetch(`http://localhost:5000/api/events?limit=100`, {
+          const eventsRes = await fetch(`https://academic-event-7bk1.vercel.app/api/events?limit=100`, {
             headers: { Authorization: `Bearer ${token}` }
           });
           const eventsData = await eventsRes.json();

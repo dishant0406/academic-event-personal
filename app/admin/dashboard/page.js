@@ -16,7 +16,7 @@ export default function AdminDashboard() {
       setLoading(true);
       const token = localStorage.getItem('token');
       
-      const response = await fetch('http://localhost:5000/api/events?status=pending', {
+      const response = await fetch('https://academic-event-7bk1.vercel.app/api/events?status=pending', {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -44,7 +44,7 @@ export default function AdminDashboard() {
   const handleStatusChange = async (id, status) => {
     try {
       const token = localStorage.getItem('token');
-      const response = await fetch(`http://localhost:5000/api/events/${id}/status`, {
+      const response = await fetch(`https://academic-event-7bk1.vercel.app/api/events/${id}/status`, {
         method: 'PUT',
         headers: {
           'Content-Type': 'application/json',

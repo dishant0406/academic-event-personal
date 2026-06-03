@@ -36,7 +36,7 @@ export default function CalendarPage() {
       try {
         const API_BASE_URL = process.env.NODE_ENV === 'production' 
           ? "https://academic-event-7bk1.vercel.app/api" 
-          : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api");
+          : (process.env.NEXT_PUBLIC_API_URL || "https://academic-event-7bk1.vercel.app/api");
           
         const res = await fetch(`${API_BASE_URL}/events`);
         if (!res.ok) {

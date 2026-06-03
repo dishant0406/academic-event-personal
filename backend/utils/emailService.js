@@ -55,7 +55,7 @@ const sendEventAlerts = async (toEmails, event) => {
           </div>
           
           <div style="text-align: center; margin-top: 30px;">
-            <a href="http://localhost:3000/events/${event._id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">View Event Details</a>
+            <a href="https://academic-event-frontend.vercel.app/events/${event._id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">View Event Details</a>
           </div>
         </div>
         <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">

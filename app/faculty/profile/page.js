@@ -30,7 +30,7 @@ export default function FacultyProfile() {
       }
 
       try {
-        const res = await fetch("http://localhost:5000/api/auth/me", {
+        const res = await fetch("https://academic-event-7bk1.vercel.app/api/auth/me", {
           headers: { Authorization: `Bearer ${token}` }
         });
         const data = await res.json();
@@ -61,7 +61,7 @@ export default function FacultyProfile() {
     setSaving(true);
     try {
       const token = localStorage.getItem("token");
-      const res = await fetch("http://localhost:5000/api/auth/profile", {
+      const res = await fetch("https://academic-event-7bk1.vercel.app/api/auth/profile", {
         method: "PUT",
         headers: { 
           "Content-Type": "application/json",

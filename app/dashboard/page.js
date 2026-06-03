@@ -26,7 +26,7 @@ export default function DashboardPage() {
         }
 
         // Fetch User Profile
-        const resUser = await fetch('http://localhost:5000/api/auth/me', {
+        const resUser = await fetch('https://academic-event-7bk1.vercel.app/api/auth/me', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
 
@@ -50,7 +50,7 @@ export default function DashboardPage() {
         }
 
         // Fetch Dashboard Events
-        const resDash = await fetch('http://localhost:5000/api/users/dashboard', {
+        const resDash = await fetch('https://academic-event-7bk1.vercel.app/api/users/dashboard', {
           headers: { 'Authorization': `Bearer ${token}` }
         });
         
@@ -82,7 +82,7 @@ export default function DashboardPage() {
         .map(s => s.trim())
         .filter(s => s !== '');
       
-      const res = await fetch('http://localhost:5000/api/users/preferences', {
+      const res = await fetch('https://academic-event-7bk1.vercel.app/api/users/preferences', {
         method: 'PATCH',
         headers: {
           'Content-Type': 'application/json',

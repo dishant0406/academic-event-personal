@@ -54,7 +54,7 @@ export default function SubmitEventPage() {
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : []
       };
 
-      const res = await fetch('http://localhost:5000/api/events', {
+      const res = await fetch('https://academic-event-7bk1.vercel.app/api/events', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',

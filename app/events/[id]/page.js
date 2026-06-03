@@ -22,7 +22,7 @@ export default function EventDetailPage({ params }) {
     if (!id) return;
     const fetchEvent = async () => {
       try {
-        const res = await fetch(`http://localhost:5000/api/events/${id}`);
+        const res = await fetch(`https://academic-event-7bk1.vercel.app/api/events/${id}`);
         if (!res.ok) {
           throw new Error('Failed to fetch event details');
         }
@@ -48,7 +48,7 @@ export default function EventDetailPage({ params }) {
         return;
       }
 
-      const res = await fetch(`http://localhost:5000/api/events/${id}/register`, {
+      const res = await fetch(`https://academic-event-7bk1.vercel.app/api/events/${id}/register`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
@@ -79,7 +79,7 @@ export default function EventDetailPage({ params }) {
         return;
       }
 
-      const res = await fetch(`http://localhost:5000/api/users/bookmarks/${id}`, {
+      const res = await fetch(`https://academic-event-7bk1.vercel.app/api/users/bookmarks/${id}`, {
         method: 'POST',
         headers: {
           'Authorization': `Bearer ${token}`,
