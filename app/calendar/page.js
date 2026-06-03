@@ -34,7 +34,11 @@ export default function CalendarPage() {
   useEffect(() => {
     const fetchEvents = async () => {
       try {
-        const res = await fetch('http://localhost:5000/api/events');
+        const API_BASE_URL = process.env.NODE_ENV === 'production' 
+          ? "https://academic-event-7bk1.vercel.app/api" 
+          : (process.env.NEXT_PUBLIC_API_URL || "http://localhost:5000/api");
+          
+        const res = await fetch(`${API_BASE_URL}/events`);
         if (!res.ok) {
           throw new Error('Failed to fetch events');
         }
