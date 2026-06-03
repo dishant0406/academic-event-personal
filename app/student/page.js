@@ -182,7 +182,7 @@ export default function StudentDashboard() {
 
       {/* My interests */}
       <div style={{ marginBottom: 32 }}>
-        <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "0.85rem", color: "var(--text-muted)", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12 }}>Your interests (Profile)</h3>
+        <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "0.85rem", color: "white", textTransform: "uppercase", letterSpacing: 1, marginBottom: 12, background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", padding: "8px 16px", borderRadius: "100px", display: "inline-flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.1)" }}>Your interests (Profile)</h3>
         <p style={{ fontSize: "0.85rem", color: "var(--text-secondary)", marginBottom: 12 }}>Select the topics you care about. We will automatically notify you when matching events are published!</p>
         <div style={{ display: "flex", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
           {userinterests.map(i => (
@@ -218,7 +218,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Recommended Events */}
-      <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "1rem", marginBottom: 16 }}>📰 Recommended For You</h3>
+      <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "1rem", marginBottom: 16, color: "white", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", padding: "8px 16px", borderRadius: "100px", display: "inline-flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.1)" }}>📰 Recommended For You</h3>
       <div className="events-grid" style={{ marginBottom: 40 }}>
         {recommended.slice(0, 4).map(e => (
           <div key={e._id} className="event-card" onClick={() => setSelectedEvent(e)}>
@@ -247,7 +247,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* Upcoming Registered Events */}
-      <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "1rem", marginBottom: 16 }}>🎫 Your Upcoming Events</h3>
+      <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "1rem", marginBottom: 16, color: "white", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", padding: "8px 16px", borderRadius: "100px", display: "inline-flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.1)" }}>🎫 Your Upcoming Events</h3>
       <div className="activity-list" style={{ marginBottom: 40 }}>
         {events.filter(e => registered.has(e._id)).map(e => (
           <div key={e._id} className="activity-item">
@@ -263,7 +263,7 @@ export default function StudentDashboard() {
       </div>
 
       {/* All Events Feed */}
-      <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "1rem", marginBottom: 16 }}>🔥 All Campus Events</h3>
+      <h3 style={{ fontFamily: "Plus Jakarta Sans,sans-serif", fontSize: "1rem", marginBottom: 16, color: "white", background: "rgba(0,0,0,0.5)", backdropFilter: "blur(12px)", padding: "8px 16px", borderRadius: "100px", display: "inline-flex", alignItems: "center", border: "1px solid rgba(255,255,255,0.1)" }}>🔥 All Campus Events</h3>
       <div className="activity-list">
         {events.slice(0, 8).map(e => (
           <div key={e._id} className="activity-item" onClick={() => setSelectedEvent(e)}>
