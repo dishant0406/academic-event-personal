@@ -15,7 +15,6 @@ const ROLE_CONFIG = {
       { href: "/student/bookmarks", label: "Bookmarks", icon: "⭐" },
       { href: "/student/registrations", label: "My Registrations", icon: "🎫" },
       { href: "/student/cross-dept", label: "Cross-Department", icon: "🏛️" },
-      { href: "/student/recordings", label: "Recordings", icon: "🎬" },
       { href: "/student/search", label: "Advanced Search", icon: "🔍" },
       { href: "/student/profile", label: "My Profile", icon: "👤" },
     ],

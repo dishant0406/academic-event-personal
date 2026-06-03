@@ -165,8 +165,6 @@ export default function StudentDashboard() {
         {[
           { value: registered.size, label: "Events Registered", color: "#6366f1", icon: "🎫" },
           { value: bookmarks.size, label: "Bookmarked", color: "#f59e0b", icon: "⭐" },
-          { value: "3", label: "Certificates Earned", color: "#10b981", icon: "📜" },
-          { value: "12", label: "Events Attended", color: "#8b5cf6", icon: "✅" },
         ].map(s => (
           <div key={s.label} className="stat-card">
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
