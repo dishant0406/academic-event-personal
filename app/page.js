@@ -29,6 +29,9 @@ export default function Home() {
   // Auth State
   const [user, setUser] = useState(null);
 
+  // Mobile Menu State
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+
   // Fetch Featured Events (only on mount)
   useEffect(() => {
     const fetchFeatured = async () => {
@@ -162,19 +165,47 @@ export default function Home() {
           <a href="#events">Events</a>
           <a href="/calendar">Calendar</a>
         </div>
-        <div style={{ display: "flex", gap: 12, alignItems: "center" }}>
+        <div className="navbar-actions" style={{ display: "flex", gap: 12, alignItems: "center" }}>
           {user && (
             <>
-              <button className="btn btn-ghost btn-sm" onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
+              <button className="btn btn-ghost btn-sm desktop-only" onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
                 Dashboard
               </button>
-              <div style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--accent-primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", cursor: "pointer" }} onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
+              <div className="user-avatar" style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--accent-primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", cursor: "pointer" }} onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
                 {user.fullName.charAt(0)}
               </div>
             </>
           )}
+          <button className="mobile-menu-btn" onClick={() => setIsMobileMenuOpen(true)}>
+            ☰
+          </button>
         </div>
       </nav>
+
+      {/* MOBILE DRAWER */}
+      <div className={`mobile-drawer ${isMobileMenuOpen ? "open" : ""}`}>
+        <div className="mobile-drawer-header">
+          <div className="navbar-brand" style={{ fontSize: "1.2rem" }}>
+            <div className="logo-icon" style={{ width: 24, height: 24, fontSize: "0.9rem" }}>⚡</div> AEH
+          </div>
+          <button className="mobile-drawer-close" onClick={() => setIsMobileMenuOpen(false)}>✕</button>
+        </div>
+        <div className="mobile-drawer-links">
+          <a href="#" onClick={() => setIsMobileMenuOpen(false)}>Home</a>
+          <a href="#events" onClick={() => setIsMobileMenuOpen(false)}>Events</a>
+          <a href="/calendar" onClick={() => setIsMobileMenuOpen(false)}>Calendar</a>
+          {user ? (
+            <a href={user.role === "admin" ? "/admin/dashboard" : "/dashboard"} onClick={() => setIsMobileMenuOpen(false)} style={{ color: "var(--accent-primary)", fontWeight: 700 }}>
+              Dashboard
+            </a>
+          ) : (
+            <a href="/login" onClick={() => setIsMobileMenuOpen(false)} style={{ color: "var(--accent-primary)", fontWeight: 700 }}>
+              Sign In
+            </a>
+          )}
+        </div>
+      </div>
+      {isMobileMenuOpen && <div className="mobile-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
       {/* HERO */}
       <section className="hero">
