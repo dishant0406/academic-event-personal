@@ -84,4 +84,68 @@ const sendEventAlerts = async (toEmails, event) => {
   }
 };
 
-module.exports = { sendEventAlerts };
+/**
+ * Send an email confirming a user's registration for an event
+ * @param {String} userEmail - The user's email address
+ * @param {String} userName - The user's full name
+ * @param {Object} event - The event object
+ */
+const sendRegistrationEmail = async (userEmail, userName, event) => {
+  if (!userEmail) return;
+
+  try {
+    // If SMTP_HOST is provided, use the generic sendEmail wrapper, otherwise use local Ethereal
+    // Wait, the generic sendEmail creates its own transporter. But we can just use the existing logic here!
+    const tp = await getTransporter();
+
+    const eventDate = new Date(event.date).toLocaleDateString('en-US', { 
+      weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' 
+    });
+
+    const htmlContent = `
+      <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #e2e8f0; border-radius: 8px; overflow: hidden;">
+        <div style="background-color: #10b981; padding: 20px; text-align: center; color: white;">
+          <h2 style="margin: 0;">Registration Confirmed! 🎉</h2>
+        </div>
+        <div style="padding: 30px; background-color: #ffffff;">
+          <p style="color: #334155; font-size: 16px;">Hi <strong>${userName}</strong>,</p>
+          <p style="color: #475569; font-size: 16px; line-height: 1.5;">You have successfully registered for the following event:</p>
+          
+          <div style="background-color: #f8fafc; border-left: 4px solid #10b981; padding: 15px; border-radius: 4px; margin: 20px 0;">
+            <h3 style="color: #1e293b; margin-top: 0;">${event.title}</h3>
+            <p style="margin: 5px 0; color: #334155;"><strong>Date:</strong> ${eventDate}</p>
+            <p style="margin: 5px 0; color: #334155;"><strong>Time:</strong> ${event.time}</p>
+            <p style="margin: 5px 0; color: #334155;"><strong>Venue:</strong> ${event.venue}</p>
+          </div>
+          
+          <p style="color: #475569; font-size: 14px;">Please mark your calendar. We look forward to seeing you there!</p>
+          
+          <div style="text-align: center; margin-top: 30px;">
+            <a href="https://academic-event-frontend.vercel.app/student/calendar" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">View My Calendar</a>
+          </div>
+        </div>
+        <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
+          Academic Events Hub - Automatically generated email.
+        </div>
+      </div>
+    `;
+
+    const info = await tp.sendMail({
+      from: '"Academic Events Platform" <alerts@academicevents.local>',
+      to: userEmail,
+      subject: `Registration Confirmed: ${event.title}`,
+      html: htmlContent,
+    });
+
+    console.log("-----------------------------------------");
+    console.log(`✉️ Registration confirmation sent to ${userEmail}!`);
+    console.log(`✉️ Preview URL: ${nodemailer.getTestMessageUrl(info)}`);
+    console.log("-----------------------------------------");
+
+    return info;
+  } catch (error) {
+    console.error("Error sending registration email:", error);
+  }
+};
+
+module.exports = { sendEventAlerts, sendRegistrationEmail };

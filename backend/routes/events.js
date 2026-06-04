@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const Event = require("../models/Event");
 const User = require("../models/User");
 const { protect, authorize } = require("../middleware/auth");
-const { sendEventAlerts } = require("../utils/emailService");
+const { sendEventAlerts, sendRegistrationEmail } = require("../utils/emailService");
 
 const router = express.Router();
 
@@ -279,6 +279,13 @@ router.post("/:id/register", protect, async (req, res) => {
       if (event.registrations >= event.capacity)
         return res.status(400).json({ success: false, message: "Event is at full capacity." });
       return res.status(400).json({ success: false, message: "Registration not available." });
+    }
+
+    // After successful atomic update, fetch event details for the email
+    const eventDetails = await Event.findById(req.params.id, "title date time venue").lean();
+    if (eventDetails && req.user.email) {
+      // Fire and forget email sending
+      sendRegistrationEmail(req.user.email, req.user.fullName, eventDetails);
     }
 
     if (req.app.get("io")) req.app.get("io").emit("registration_update", { eventId: req.params.id });
