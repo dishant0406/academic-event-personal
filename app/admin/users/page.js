@@ -1,15 +1,28 @@
 "use client";
-const USERS = [
-  { id: 1, name: "Ashish Kumar Panigrahi", role: "Student", dept: "Computer Science", email: "ashish.panigrahi@iitbhu.ac.in" },
-  { id: 2, name: "Dr. Priya Sharma", role: "Faculty", dept: "Computer Science", email: "priya@iitbhu.ac.in" },
-  { id: 3, name: "Ankit Verma", role: "Scholar", dept: "Physics", email: "ankit@iitbhu.ac.in" },
-  { id: 4, name: "Prof. Rajesh Verma", role: "Faculty", dept: "Physics", email: "rajesh@iitbhu.ac.in" },
-  { id: 5, name: "Sneha Gupta", role: "Student", dept: "Mathematics", email: "sneha@iitbhu.ac.in" },
-  { id: 6, name: "Dr. Anand Mishra", role: "Faculty", dept: "Mathematics", email: "anand@iitbhu.ac.in" },
-  { id: 7, name: "Prateek Singh", role: "Student", dept: "Civil Engineering", email: "prateek@iitbhu.ac.in" },
-  { id: 8, name: "Dr. Meena Gupta", role: "Admin", dept: "Central Library", email: "meena@iitbhu.ac.in" },
-];
+import { useState, useEffect } from "react";
+import { fetchApi } from "@/lib/api";
+
 export default function AdminUsers() {
+  const [users, setUsers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const loadUsers = async () => {
+      try {
+        const res = await fetchApi("/users");
+        const data = await res.json();
+        if (data.success) setUsers(data.users);
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadUsers();
+  }, []);
+
+  if (loading) return <div style={{ padding: 40, textAlign: "center" }}>Loading users...</div>;
+
   return (
     <>
       <div className="dashboard-header"><h1>User Management 👥</h1><p>Manage users and roles</p></div>
@@ -21,17 +34,18 @@ export default function AdminUsers() {
         <table className="data-table">
           <thead><tr><th>Name</th><th>Role</th><th>Department</th><th>Email</th><th>Actions</th></tr></thead>
           <tbody>
-            {USERS.map(u => (
-              <tr key={u.id}>
-                <td style={{ fontWeight: 600 }}>{u.name}</td>
-                <td><span className="status-badge" style={{ background: u.role==="Student"?"rgba(99,102,241,0.15)":u.role==="Faculty"?"rgba(16,185,129,0.15)":u.role==="Scholar"?"rgba(139,92,246,0.15)":"rgba(245,158,11,0.15)", color: u.role==="Student"?"#6366f1":u.role==="Faculty"?"#10b981":u.role==="Scholar"?"#8b5cf6":"#f59e0b" }}>{u.role}</span></td>
-                <td style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{u.dept}</td>
+            {users.map(u => (
+              <tr key={u._id}>
+                <td style={{ fontWeight: 600 }}>{u.fullName}</td>
+                <td><span className="status-badge" style={{ background: u.role==="student"?"rgba(99,102,241,0.15)":u.role==="faculty"?"rgba(16,185,129,0.15)":"rgba(245,158,11,0.15)", color: u.role==="student"?"#6366f1":u.role==="faculty"?"#10b981":"#f59e0b" }}>{u.role.charAt(0).toUpperCase() + u.role.slice(1)}</span></td>
+                <td style={{ fontSize: "0.85rem", color: "var(--text-secondary)" }}>{u.department}</td>
                 <td style={{ fontSize: "0.85rem", color: "var(--text-muted)" }}>{u.email}</td>
                 <td><div style={{ display: "flex", gap: 4 }}><button className="btn btn-ghost btn-sm">Edit</button><button className="btn btn-ghost btn-sm" style={{ color: "#f43f5e" }}>Remove</button></div></td>
               </tr>
             ))}
           </tbody>
         </table>
+        {users.length === 0 && <div style={{ padding: 20, textAlign: "center", color: "var(--text-muted)" }}>No users found.</div>}
       </div>
     </>
   );

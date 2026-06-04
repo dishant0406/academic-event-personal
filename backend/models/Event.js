@@ -48,6 +48,14 @@ const eventSchema = new mongoose.Schema(
       type: Number,
       default: 0,
     },
+    views: {
+      type: Number,
+      default: 0,
+    },
+    clicks: {
+      type: Number,
+      default: 0,
+    },
     registeredUsers: [
       {
         type: mongoose.Schema.Types.ObjectId,

@@ -86,9 +86,10 @@ const globalLimiter = rateLimit({
 app.use(globalLimiter);
 
 // Routes
-app.use("/api/auth",   require("./routes/auth"));
-app.use("/api/events", require("./routes/events"));
-app.use("/api/users",  require("./routes/users"));
+app.use("/api/auth",      require("./routes/auth"));
+app.use("/api/events",    require("./routes/events"));
+app.use("/api/users",     require("./routes/users"));
+app.use("/api/analytics", require("./routes/analytics"));
 
 // Health check
 app.get("/api/health", (req, res) => {
