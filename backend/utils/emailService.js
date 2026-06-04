@@ -6,18 +6,29 @@ let transporter = null;
 const getTransporter = async () => {
   if (transporter) return transporter;
 
-  // Use Ethereal Email for testing (catches emails and provides a link to view them)
-  const testAccount = await nodemailer.createTestAccount();
-
-  transporter = nodemailer.createTransport({
-    host: "smtp.ethereal.email",
-    port: 587,
-    secure: false, // true for 465, false for other ports
-    auth: {
-      user: testAccount.user, 
-      pass: testAccount.pass, 
-    },
-  });
+  if (process.env.SMTP_HOST) {
+    transporter = nodemailer.createTransport({
+      host: process.env.SMTP_HOST,
+      port: process.env.SMTP_PORT,
+      auth: {
+        user: process.env.SMTP_EMAIL,
+        pass: process.env.SMTP_PASSWORD,
+      },
+    });
+  } else {
+    // Use Ethereal Email for testing (catches emails and provides a link to view them)
+    const testAccount = await nodemailer.createTestAccount();
+    transporter = nodemailer.createTransport({
+      host: "smtp.ethereal.email",
+      port: 587,
+      secure: false, // true for 465, false for other ports
+      auth: {
+        user: testAccount.user, 
+        pass: testAccount.pass, 
+      },
+    });
+    console.log(`⚠️ Using Ethereal Mock Email Service. Account: ${testAccount.user}`);
+  }
 
   return transporter;
 };
@@ -66,7 +77,7 @@ const sendEventAlerts = async (toEmails, event) => {
 
     // Send the email (using bcc to protect privacy when sending to multiple users)
     const info = await tp.sendMail({
-      from: '"Academic Events Platform" <alerts@academicevents.local>',
+      from: `"${process.env.FROM_NAME || 'Academic Events Platform'}" <${process.env.SMTP_EMAIL || 'alerts@academicevents.local'}>`,
       to: '"Subscribed Users" <undisclosed-recipients@local>',
       bcc: toEmails,
       subject: `New Event: ${event.title}`,
@@ -131,7 +142,7 @@ const sendRegistrationEmail = async (userEmail, userName, event) => {
     `;
 
     const info = await tp.sendMail({
-      from: '"Academic Events Platform" <alerts@academicevents.local>',
+      from: `"${process.env.FROM_NAME || 'Academic Events Platform'}" <${process.env.SMTP_EMAIL || 'alerts@academicevents.local'}>`,
       to: userEmail,
       subject: `Registration Confirmed: ${event.title}`,
       html: htmlContent,
