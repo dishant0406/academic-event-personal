@@ -222,6 +222,22 @@ export default function Home() {
       </div>
       {isMobileMenuOpen && <div className="mobile-overlay" onClick={() => setIsMobileMenuOpen(false)}></div>}
 
+      {/* MOBILE BOTTOM NAVIGATION (Native App Feel) */}
+      <div className="mobile-bottom-nav">
+        <div className="bottom-nav-item active" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}>
+          <span className="bottom-nav-icon">🏠</span>
+          <span className="bottom-nav-label">Home</span>
+        </div>
+        <div className="bottom-nav-item" onClick={() => router.push('/calendar')}>
+          <span className="bottom-nav-icon">🗓️</span>
+          <span className="bottom-nav-label">Calendar</span>
+        </div>
+        <div className="bottom-nav-item" onClick={() => router.push(user ? (user.role === 'admin' ? '/admin/dashboard' : '/dashboard') : '/login')}>
+          <span className="bottom-nav-icon">{user ? '📊' : '🔑'}</span>
+          <span className="bottom-nav-label">{user ? 'Dashboard' : 'Sign In'}</span>
+        </div>
+      </div>
+
       {/* HERO */}
       <section className="hero">
         <div className="orb orb-1" /><div className="orb orb-2" /><div className="orb orb-3" />
