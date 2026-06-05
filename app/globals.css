@@ -609,11 +609,15 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
 
 /* MOBILE RESPONSIVENESS */
 @media (max-width: 768px) {
-  .hero { display: none !important; } /* Hidden on mobile to match mockup */
+  .hero { padding: 100px 1.25rem 30px; min-height: auto; display: block !important; }
+  .hero h1 { font-size: 1.7rem; margin-bottom: 12px; line-height: 1.2; }
+  .hero p { font-size: 0.9rem; }
+  .hero-stats { flex-direction: column; gap: 16px; margin-top: 24px; padding-top: 24px; }
+  
   .desktop-search-bar { display: none !important; }
   .mobile-only-search { 
     display: block !important; 
-    padding: 100px 1.25rem 20px; 
+    padding: 10px 1.25rem 20px; 
   }
   .navbar { top: 10px; width: 95%; height: 60px; padding: 0 1rem; border-radius: 30px; }
   .navbar-links { display: none; }
