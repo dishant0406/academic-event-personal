@@ -226,7 +226,7 @@ export default function Home() {
       <section className="hero">
         <div className="orb orb-1" /><div className="orb orb-2" /><div className="orb orb-3" />
         <div className="hero-content fade-in">
-          <div className="hero-badge">🎓 Banaras Hindu University & Beyond</div>
+          <div className="hero-badge">🎓 IIT BHU & Beyond</div>
           <h1>Discover Every Academic Event On Campus</h1>
           <p>One platform to find seminars, workshops, conferences, guest lectures, and training programs. Never miss a relevant academic opportunity again.</p>
           <div className="hero-stats">
