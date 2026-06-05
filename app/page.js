@@ -238,6 +238,22 @@ export default function Home() {
         </div>
       </div>
 
+      {/* MOBILE ONLY SEARCH BAR (Matches mockup) */}
+      <div className="mobile-only-search">
+        <div style={{ position: "relative" }}>
+          <input 
+            type="text" 
+            className="form-input" 
+            placeholder="Search events, topics, speakers..." 
+            style={{ paddingLeft: "40px", borderRadius: "12px", background: "var(--bg-secondary)", border: "1px solid var(--border)" }}
+          />
+          <span style={{ position: "absolute", left: "12px", top: "50%", transform: "translateY(-50%)", opacity: 0.5 }}>🔍</span>
+          <button className="btn btn-secondary btn-sm" style={{ position: "absolute", right: "6px", top: "50%", transform: "translateY(-50%)", padding: "4px 8px", fontSize: "0.8rem", borderRadius: "8px" }}>
+            <span style={{ opacity: 0.7 }}>⌘</span> Filter
+          </button>
+        </div>
+      </div>
+
       {/* HERO */}
       <section className="hero">
         <div className="orb orb-1" /><div className="orb orb-2" /><div className="orb orb-3" />
@@ -349,7 +365,7 @@ export default function Home() {
           </div>
           
           {/* SEARCH BAR */}
-          <div style={{ maxWidth: 600, margin: "0 auto 2rem", position: "relative" }}>
+          <div className="desktop-search-bar" style={{ maxWidth: 600, margin: "0 auto 2rem", position: "relative" }}>
             <input 
               type="text" 
               className="form-input" 
