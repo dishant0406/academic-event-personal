@@ -172,19 +172,19 @@ export default function Home() {
       {/* NAVBAR */}
       <nav className="navbar">
         <div className="navbar-brand">
-          <div className="logo-icon">⚡</div>
+          <div className="logo-icon">🎓</div>
           Academic Events Hub (AEH)
         </div>
         <div className="navbar-links">
-          <a href="#" style={{ color: "var(--text-primary)", fontWeight: 600 }}>Home</a>
-          <a href="#events">Events</a>
-          <a href="/calendar">Calendar</a>
+          <a href="#" style={{ color: "var(--text-primary)", fontWeight: 600 }}>🏠 Home</a>
+          <a href="#events">🎟️ Events</a>
+          <a href="/calendar">🗓️ Calendar</a>
         </div>
         <div className="navbar-actions" style={{ display: "flex", gap: 12, alignItems: "center" }}>
           {user && (
             <>
               <button className="btn btn-ghost btn-sm desktop-only" onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
-                Dashboard
+                📊 Dashboard
               </button>
               <div className="user-avatar" style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--accent-primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", cursor: "pointer" }} onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
                 {user.fullName.charAt(0)}
@@ -201,21 +201,21 @@ export default function Home() {
       <div className={`mobile-drawer ${isMobileMenuOpen ? "open" : ""}`}>
         <div className="mobile-drawer-header">
           <div className="navbar-brand" style={{ fontSize: "1.2rem" }}>
-            <div className="logo-icon" style={{ width: 24, height: 24, fontSize: "0.9rem" }}>⚡</div> AEH
+            <div className="logo-icon" style={{ width: 24, height: 24, fontSize: "0.9rem" }}>🎓</div> AEH
           </div>
           <button className="mobile-drawer-close" onClick={() => setIsMobileMenuOpen(false)}>✕</button>
         </div>
         <div className="mobile-drawer-links">
-          <a href="#" onClick={() => setIsMobileMenuOpen(false)}>Home</a>
-          <a href="#events" onClick={() => setIsMobileMenuOpen(false)}>Events</a>
-          <a href="/calendar" onClick={() => setIsMobileMenuOpen(false)}>Calendar</a>
+          <a href="#" onClick={() => setIsMobileMenuOpen(false)}>🏠 Home</a>
+          <a href="#events" onClick={() => setIsMobileMenuOpen(false)}>🎟️ Events</a>
+          <a href="/calendar" onClick={() => setIsMobileMenuOpen(false)}>🗓️ Calendar</a>
           {user ? (
             <a href={user.role === "admin" ? "/admin/dashboard" : "/dashboard"} onClick={() => setIsMobileMenuOpen(false)} style={{ color: "var(--accent-primary)", fontWeight: 700 }}>
-              Dashboard
+              📊 Dashboard
             </a>
           ) : (
             <a href="/login" onClick={() => setIsMobileMenuOpen(false)} style={{ color: "var(--accent-primary)", fontWeight: 700 }}>
-              Sign In
+              🔑 Sign In
             </a>
           )}
         </div>
@@ -236,10 +236,10 @@ export default function Home() {
           </div>
           <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 32 }}>
             <button className="btn btn-primary btn-lg" onClick={() => router.push("/signup")} style={{ paddingLeft: 32, paddingRight: 32 }}>
-              Get Started — Sign Up →
+              🚀 Get Started — Sign Up →
             </button>
             <button className="btn btn-secondary btn-lg" onClick={() => router.push("/login")} style={{ paddingLeft: 32, paddingRight: 32 }}>
-              Sign In
+              🔑 Sign In
             </button>
           </div>
         </div>
@@ -345,7 +345,7 @@ export default function Home() {
           {/* FILTER BAR */}
           <div style={{ display: "flex", gap: "1rem", flexWrap: "wrap", justifyContent: "center", marginBottom: "3rem", padding: "1rem", background: "var(--surface)", borderRadius: "12px", border: "1px solid var(--border-color)" }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
-              <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem", fontWeight: 500 }}>Event Type:</span>
+              <span style={{ color: "var(--text-secondary)", fontSize: "0.9rem", fontWeight: 500 }}>🏷️ Event Type:</span>
               <select 
                 className="input-field" 
                 style={{ padding: "8px 12px", width: "auto", minWidth: "150px" }}
