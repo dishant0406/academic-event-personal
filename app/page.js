@@ -141,6 +141,21 @@ export default function Home() {
     };
   }, []);
 
+  // Scroll Reveal Logic
+  useEffect(() => {
+    const observer = new IntersectionObserver((entries) => {
+      entries.forEach(entry => {
+        if (entry.isIntersecting) {
+          entry.target.classList.add('active');
+        }
+      });
+    }, { threshold: 0.1 });
+
+    document.querySelectorAll('.reveal').forEach(el => observer.observe(el));
+    
+    return () => observer.disconnect();
+  }, [featuredEvents, upcomingEvents, recommendedEvents]);
+
   // Handlers for filters
   const handleTypeChange = (e) => {
     setTypeFilter(e.target.value);
@@ -232,7 +247,7 @@ export default function Home() {
 
       {/* FEATURED EVENTS */}
       {featuredEvents.length > 0 && (
-        <section className="section" style={{ background: "rgba(99, 102, 241, 0.02)" }}>
+        <section className="section reveal" style={{ background: "rgba(99, 102, 241, 0.02)" }}>
           <div style={{ maxWidth: 1280, margin: "0 auto" }}>
             <div className="section-header" style={{ marginBottom: "2rem" }}>
               <h2>⭐ Featured Events</h2>
@@ -240,7 +255,7 @@ export default function Home() {
             </div>
             <div className="events-grid">
               {featuredEvents.map(e => (
-                <div key={e._id} className="event-card" style={{ border: "1px solid var(--primary-border)" }}>
+                <div key={e._id} className="event-card reveal" style={{ border: "1px solid var(--primary-border)" }}>
                   <div className="event-card-banner" style={{ background: `linear-gradient(135deg, ${e.color || '#6366f1'}22, ${e.color || '#6366f1'}08)` }}>
                     <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: "3rem", opacity: 0.3 }}>
                       {e.type === "conference" ? "🏛️" : e.type === "workshop" ? "🔧" : "📋"}
@@ -269,7 +284,7 @@ export default function Home() {
 
       {/* RECOMMENDED FOR YOU */}
       {user && recommendedEvents.length > 0 && (
-        <section className="section" style={{ background: "rgba(16, 185, 129, 0.03)" }}>
+        <section className="section reveal" style={{ background: "rgba(16, 185, 129, 0.03)" }}>
           <div style={{ maxWidth: 1280, margin: "0 auto" }}>
             <div className="section-header" style={{ marginBottom: "2rem" }}>
               <h2>🎯 Recommended For You</h2>
@@ -277,7 +292,7 @@ export default function Home() {
             </div>
             <div className="events-grid">
               {recommendedEvents.map(e => (
-                <div key={e._id} className="event-card" onClick={() => router.push(`/events/${e._id}`)} style={{ border: "1px solid #10b981", cursor: "pointer" }}>
+                <div key={e._id} className="event-card reveal" onClick={() => router.push(`/events/${e._id}`)} style={{ border: "1px solid #10b981", cursor: "pointer" }}>
                   <div className="event-card-banner" style={{ background: `linear-gradient(135deg, ${e.color || '#10b981'}22, ${e.color || '#10b981'}08)` }}>
                     <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: "3rem", opacity: 0.3 }}>
                       ✨
@@ -307,7 +322,7 @@ export default function Home() {
       )}
 
       {/* DISCOVERY / LISTINGS */}
-      <section id="events" className="section">
+      <section id="events" className="section reveal">
         <div style={{ maxWidth: 1280, margin: "0 auto" }}>
           <div className="section-header" style={{ marginBottom: "2rem" }}>
             <h2>Upcoming Events</h2>
@@ -387,7 +402,7 @@ export default function Home() {
           ) : (
             <div className="events-grid">
               {upcomingEvents.map(e => (
-                <div key={e._id} className="event-card" onClick={() => router.push(`/events/${e._id}`)} style={{ cursor: "pointer" }}>
+                <div key={e._id} className="event-card reveal" onClick={() => router.push(`/events/${e._id}`)} style={{ cursor: "pointer" }}>
                   <div className="event-card-banner" style={{ background: `linear-gradient(135deg, ${e.color || '#6366f1'}22, ${e.color || '#6366f1'}08)` }}>
                     <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", fontSize: "3rem", opacity: 0.3 }}>
                       {e.type === "conference" ? "🏛️" : e.type === "workshop" ? "🔧" : "📋"}
@@ -428,14 +443,14 @@ export default function Home() {
           
           {loading && upcomingEvents.length > 0 && (
             <div style={{ textAlign: "center", marginTop: "2rem", color: "var(--text-secondary)" }}>
-              Loading more events...
+              <div className="spinner"></div> Loading more events...
             </div>
           )}
         </div>
       </section>
 
       {/* FEATURES */}
-      <section id="features" className="section">
+      <section id="features" className="section reveal">
         <div className="section-header">
           <h2>Why AEH?</h2>
           <p>Built for the unique needs of large universities</p>
