@@ -474,8 +474,10 @@ a { color: inherit; text-decoration: none; }
 
 /* FOOTER */
 .footer {
-  background: var(--accent-primary);
-  color: white;
+  background: var(--bg-card);
+  backdrop-filter: blur(24px); -webkit-backdrop-filter: blur(24px);
+  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  color: var(--text-primary);
   padding: 80px 2rem 40px;
   position: relative;
   z-index: 2;
@@ -492,7 +494,7 @@ a { color: inherit; text-decoration: none; }
 .footer-brand h3 {
   font-size: 1.5rem;
   margin-bottom: 16px;
-  color: white;
+  color: var(--text-highlight);
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
 .footer-brand p {
@@ -507,7 +509,7 @@ a { color: inherit; text-decoration: none; }
 }
 .footer-col h4 {
   font-size: 1.1rem;
-  color: white;
+  color: var(--text-primary);
   margin-bottom: 8px;
   font-family: 'Plus Jakarta Sans', sans-serif;
 }
@@ -517,7 +519,7 @@ a { color: inherit; text-decoration: none; }
   transition: all 0.3s;
 }
 .footer-col a:hover {
-  color: var(--accent-secondary);
+  color: var(--text-highlight);
   transform: translateX(4px);
 }
 .footer-bottom {
