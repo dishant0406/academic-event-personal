@@ -625,12 +625,12 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
   .modal { max-width: 95vw; margin: 10px; }
   .tabs { flex-wrap: wrap; gap: 8px; }
   .events-grid { grid-template-columns: 1fr; }
-  .mobile-menu-btn { display: none; }
+  .mobile-menu-btn { display: none !important; }
   .desktop-only { display: none; }
   .user-avatar { display: none !important; }
   
   /* Show bottom nav and add padding */
-  .mobile-bottom-nav { display: flex; }
+  .mobile-bottom-nav { display: flex !important; }
   body { padding-bottom: 70px; }
   .footer { margin-bottom: 70px; }
 }
