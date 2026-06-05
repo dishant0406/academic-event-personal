@@ -250,12 +250,15 @@ export default function Home() {
               <div key={l} className="hero-stat"><div className="number">{n}</div><div className="label">{l}</div></div>
             ))}
           </div>
-          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 32 }}>
+          <div style={{ display: "flex", gap: 16, justifyContent: "center", marginTop: 32, flexWrap: "wrap" }}>
             <button className="btn btn-primary btn-lg" onClick={() => router.push("/signup")} style={{ paddingLeft: 32, paddingRight: 32 }}>
               🚀 Get Started — Sign Up →
             </button>
             <button className="btn btn-secondary btn-lg" onClick={() => router.push("/login")} style={{ paddingLeft: 32, paddingRight: 32 }}>
               🔑 Sign In
+            </button>
+            <button className="btn btn-secondary btn-lg" onClick={() => router.push("/poster-upload")} style={{ paddingLeft: 32, paddingRight: 32, background: 'rgba(99, 102, 241, 0.1)', borderColor: 'var(--accent-primary)', color: 'var(--text-highlight)' }}>
+              🪄 Extract Event from Poster
             </button>
           </div>
         </div>
