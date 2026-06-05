@@ -631,24 +631,65 @@ input:-webkit-autofill, input:-webkit-autofill:hover, input:-webkit-autofill:foc
   
   /* Show bottom nav and add padding */
   .mobile-bottom-nav { display: flex !important; }
-  body { padding-bottom: 70px; }
-  .footer { margin-bottom: 70px; }
+  body { padding-bottom: 90px; }
+  .footer { margin-bottom: 90px; display: none; } /* Hide footer completely on mobile to match mockup */
+
+  /* EXACT MOCKUP: Carousel Horizontal Scroll */
+  .carousel-mobile {
+    display: flex !important;
+    flex-wrap: nowrap !important;
+    overflow-x: auto;
+    scroll-snap-type: x mandatory;
+    padding-bottom: 16px;
+    gap: 16px !important;
+    margin-right: -1.25rem;
+    padding-right: 1.25rem;
+    scrollbar-width: none;
+  }
+  .carousel-mobile::-webkit-scrollbar { display: none; }
+  .carousel-mobile .event-card {
+    min-width: 85vw !important;
+    flex: 0 0 auto !important;
+    scroll-snap-align: center;
+  }
+
+  /* EXACT MOCKUP: Schedule Vertical List */
+  .schedule-mobile {
+    display: flex !important;
+    flex-direction: column !important;
+    gap: 16px !important;
+  }
+  .schedule-mobile .event-card {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: center !important;
+    padding: 16px !important;
+    min-height: auto !important;
+  }
+  .schedule-mobile .event-card-banner {
+    display: none !important;
+  }
+  .schedule-mobile .event-card-body {
+    padding: 0 !important;
+    flex: 1;
+  }
 }
 
 /* NATIVE MOBILE BOTTOM NAV */
 .mobile-bottom-nav {
   display: none;
   position: fixed;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 70px;
-  background: var(--bg-card);
+  bottom: 20px;
+  left: 20px;
+  right: 20px;
+  height: 64px;
+  background: rgba(15, 23, 42, 0.85);
   backdrop-filter: blur(24px);
   -webkit-backdrop-filter: blur(24px);
-  border-top: 1px solid rgba(255, 255, 255, 0.15);
+  border: 1px solid rgba(255, 255, 255, 0.15);
+  border-radius: 50px;
   z-index: 1000;
-  padding-bottom: env(safe-area-inset-bottom);
+  box-shadow: 0 10px 30px rgba(0,0,0,0.5);
 }
 .bottom-nav-item {
   flex: 1;

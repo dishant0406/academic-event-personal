@@ -272,7 +272,7 @@ export default function Home() {
               <h2>⭐ Featured Events</h2>
               <p>Highly anticipated events handpicked for you</p>
             </div>
-            <div className="events-grid">
+            <div className="events-grid carousel-mobile">
               {featuredEvents.map(e => (
                 <div key={e._id} className="event-card reveal" style={{ border: "1px solid var(--primary-border)" }}>
                   <div className="event-card-banner" style={{ background: `linear-gradient(135deg, ${e.color || '#6366f1'}22, ${e.color || '#6366f1'}08)` }}>
@@ -309,7 +309,7 @@ export default function Home() {
               <h2>🎯 Recommended For You</h2>
               <p>Based on your interests and research domains</p>
             </div>
-            <div className="events-grid">
+            <div className="events-grid carousel-mobile">
               {recommendedEvents.map(e => (
                 <div key={e._id} className="event-card reveal" onClick={() => router.push(`/events/${e._id}`)} style={{ border: "1px solid #10b981", cursor: "pointer" }}>
                   <div className="event-card-banner" style={{ background: `linear-gradient(135deg, ${e.color || '#10b981'}22, ${e.color || '#10b981'}08)` }}>
@@ -419,7 +419,7 @@ export default function Home() {
               </button>
             </div>
           ) : (
-            <div className="events-grid">
+            <div className="events-grid schedule-mobile">
               {upcomingEvents.map(e => (
                 <div key={e._id} className="event-card reveal" onClick={() => router.push(`/events/${e._id}`)} style={{ cursor: "pointer" }}>
                   <div className="event-card-banner" style={{ background: `linear-gradient(135deg, ${e.color || '#6366f1'}22, ${e.color || '#6366f1'}08)` }}>
