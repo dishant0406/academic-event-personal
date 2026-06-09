@@ -52,6 +52,20 @@ export default function Sidebar({ role }) {
   const pathname = usePathname();
   const router = useRouter();
   const config = ROLE_CONFIG[role];
+  
+  const handleLogout = () => {
+    // Clear authentication data from localStorage
+    localStorage.removeItem('authToken');
+    localStorage.removeItem('userRole');
+    localStorage.removeItem('user');
+    
+    // Clear any session storage if used
+    sessionStorage.clear();
+    
+    // Redirect to login page
+    router.push('/login');
+  };
+  
   if (!config) return null;
 
   return (
@@ -87,9 +101,9 @@ export default function Sidebar({ role }) {
       </nav>
 
       <div className="sidebar-footer">
-        <button className="sidebar-link" onClick={() => router.push("/")}>
+        <button className="sidebar-link" onClick={handleLogout}>
           <span className="sidebar-link-icon">🚪</span>
-          Switch Role
+          Logout
         </button>
       </div>
     </aside>
