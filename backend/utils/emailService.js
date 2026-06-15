@@ -1,4 +1,6 @@
 const nodemailer = require("nodemailer");
+const { env } = require("../config/env");
+const { DEFAULT_FROM_NAME } = require("../config/constants");
 
 // Initialize test account and transporter globally so we don't recreate it every time
 let transporter = null;
@@ -6,13 +8,13 @@ let transporter = null;
 const getTransporter = async () => {
   if (transporter) return transporter;
 
-  if (process.env.SMTP_HOST) {
+  if (env.SMTP_HOST) {
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
       auth: {
-        user: process.env.SMTP_EMAIL,
-        pass: process.env.SMTP_PASSWORD,
+        user: env.SMTP_EMAIL,
+        pass: env.SMTP_PASSWORD,
       },
     });
   } else {
@@ -66,7 +68,7 @@ const sendEventAlerts = async (toEmails, event) => {
           </div>
           
           <div style="text-align: center; margin-top: 30px;">
-            <a href="https://academic-event-frontend.vercel.app/events/${event._id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">View Event Details</a>
+            <a href="${env.FRONTEND_BASE_URL}/events/${event._id}" style="background-color: #3b82f6; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">View Event Details</a>
           </div>
         </div>
         <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
@@ -77,7 +79,7 @@ const sendEventAlerts = async (toEmails, event) => {
 
     // Send the email (using bcc to protect privacy when sending to multiple users)
     const info = await tp.sendMail({
-      from: `"${process.env.FROM_NAME || 'Academic Events Platform'}" <${process.env.SMTP_EMAIL || 'alerts@academicevents.local'}>`,
+      from: `"${DEFAULT_FROM_NAME}" <${env.SMTP_EMAIL || 'alerts@academicevents.local'}>`,
       to: '"Subscribed Users" <undisclosed-recipients@local>',
       bcc: toEmails,
       subject: `New Event: ${event.title}`,
@@ -132,7 +134,7 @@ const sendRegistrationEmail = async (userEmail, userName, event) => {
           <p style="color: #475569; font-size: 14px;">Please mark your calendar. We look forward to seeing you there!</p>
           
           <div style="text-align: center; margin-top: 30px;">
-            <a href="https://academic-event-frontend.vercel.app/student/calendar" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">View My Calendar</a>
+            <a href="${env.FRONTEND_BASE_URL}/student/calendar" style="background-color: #10b981; color: white; padding: 12px 24px; text-decoration: none; border-radius: 4px; font-weight: bold; display: inline-block;">View My Calendar</a>
           </div>
         </div>
         <div style="background-color: #f1f5f9; padding: 15px; text-align: center; font-size: 12px; color: #64748b;">
@@ -142,7 +144,7 @@ const sendRegistrationEmail = async (userEmail, userName, event) => {
     `;
 
     const info = await tp.sendMail({
-      from: `"${process.env.FROM_NAME || 'Academic Events Platform'}" <${process.env.SMTP_EMAIL || 'alerts@academicevents.local'}>`,
+      from: `"${DEFAULT_FROM_NAME}" <${env.SMTP_EMAIL || 'alerts@academicevents.local'}>`,
       to: userEmail,
       subject: `Registration Confirmed: ${event.title}`,
       html: htmlContent,

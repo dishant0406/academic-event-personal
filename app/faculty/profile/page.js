@@ -1,166 +1,136 @@
 "use client";
-import { useState, useEffect } from "react";
+
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
+import { fetchApi } from "@/lib/api";
+import { clearStoredSession, updateStoredUser } from "@/lib/session";
 
-export default function FacultyProfile() {
+export default function FacultyProfilePage() {
   const router = useRouter();
-  const [user, setUser] = useState(null);
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
-  const [toast, setToast] = useState(null);
-
-  // Form state
+  const [status, setStatus] = useState("loading");
+  const [message, setMessage] = useState("");
   const [form, setForm] = useState({
     fullName: "",
     designation: "",
     department: "",
     facultyId: "",
-    email: "", // Email is usually non-editable or separate, but we display it
-    researchDomain: ""
+    researchDomain: "",
+    email: "",
   });
 
-  const showToast = (msg) => { setToast(msg); setTimeout(() => setToast(null), 3500); };
-
   useEffect(() => {
-    const fetchUser = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        router.push("/login");
-        return;
-      }
+    let isMounted = true;
 
+    const loadProfile = async () => {
       try {
-        const res = await fetch("https://academic-event-7bk1.vercel.app/api/auth/me", {
-          headers: { Authorization: `Bearer ${token}` }
-        });
-        const data = await res.json();
-        
-        if (data.success) {
-          setUser(data.user);
-          setForm({
-            fullName: data.user.fullName || "",
-            designation: data.user.designation || "",
-            department: data.user.department || "",
-            facultyId: data.user.facultyId || "",
-            email: data.user.email || "",
-            researchDomain: data.user.researchDomain || ""
-          });
-        } else {
-          router.push("/login");
+        const response = await fetchApi("/auth/me");
+        const data = await response.json();
+
+        if (!response.ok || !data.success) {
+          throw new Error(data.message || "Failed to load profile.");
         }
-      } catch (err) {
-        console.error(err);
-      } finally {
-        setLoading(false);
+
+        if (!isMounted) return;
+
+        setForm({
+          fullName: data.user.fullName || "",
+          designation: data.user.designation || "",
+          department: data.user.department || "",
+          facultyId: data.user.facultyId || "",
+          researchDomain: data.user.researchDomain || "",
+          email: data.user.email || "",
+        });
+        setStatus("ready");
+      } catch {
+        clearStoredSession();
+        router.replace("/login");
       }
     };
-    fetchUser();
+
+    loadProfile();
+
+    return () => {
+      isMounted = false;
+    };
   }, [router]);
 
   const handleSave = async () => {
-    setSaving(true);
+    setStatus("saving");
+
     try {
-      const token = localStorage.getItem("token");
-      const res = await fetch("https://academic-event-7bk1.vercel.app/api/auth/profile", {
+      const response = await fetchApi("/auth/profile", {
         method: "PUT",
-        headers: { 
-          "Content-Type": "application/json",
-          Authorization: `Bearer ${token}`
-        },
         body: JSON.stringify({
           fullName: form.fullName,
           designation: form.designation,
           department: form.department,
           facultyId: form.facultyId,
-          researchDomain: form.researchDomain
-        })
+          researchDomain: form.researchDomain,
+        }),
       });
-      const data = await res.json();
-      if (data.success) {
-        showToast("✅ Profile updated successfully!");
-        setUser(data.user);
-        // update local storage
-        const current = JSON.parse(localStorage.getItem("currentUser") || "{}");
-        localStorage.setItem("currentUser", JSON.stringify({ ...current, ...data.user }));
-      } else {
-        showToast(`❌ ${data.message}`);
+      const data = await response.json();
+
+      if (!response.ok || !data.success) {
+        throw new Error(data.message || "Failed to save profile.");
       }
-    } catch (err) {
-      showToast("❌ Failed to update profile.");
-    } finally {
-      setSaving(false);
+
+      updateStoredUser(data.user);
+      setMessage("Profile updated successfully.");
+      setStatus("ready");
+    } catch (error) {
+      setMessage(error.message);
+      setStatus("ready");
     }
   };
 
-  if (loading) return <div style={{ padding: "4rem", textAlign: "center" }}>Loading profile...</div>;
-  if (!user) return null;
-
-  const initials = user.fullName ? user.fullName.substring(0, 2).toUpperCase() : "U";
+  if (status === "loading") {
+    return <div style={{ padding: "4rem", textAlign: "center" }}>Loading profile...</div>;
+  }
 
   return (
-    <>
+    <div className="form-container" style={{ maxWidth: "100%" }}>
       <div className="dashboard-header">
-        <h1>My Profile 👤</h1>
-        <p>Manage your faculty account</p>
+        <h1>My Profile</h1>
+        <p>Manage your faculty details.</p>
       </div>
-      <div className="form-container" style={{ maxWidth: "100%", position: "relative" }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 24, marginBottom: 32, paddingBottom: 24, borderBottom: "1px solid var(--border)" }}>
-          <div style={{ width: 80, height: 80, borderRadius: "50%", background: "linear-gradient(135deg, #10b981, #06b6d4)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: "2rem", color: "white", fontWeight: "bold" }}>
-            {initials}
-          </div>
-          <div>
-            <h3 style={{ fontFamily: "Space Grotesk, sans-serif", fontSize: "1.2rem", fontWeight: 700 }}>{user.fullName}</h3>
-            <p style={{ color: "var(--text-secondary)", fontSize: "0.85rem", fontFamily: "Outfit, sans-serif" }}>
-              {user.designation || "Faculty"} · Dept. of {user.department}
-            </p>
-            <p style={{ color: "var(--text-muted)", fontSize: "0.8rem", fontFamily: "Outfit, sans-serif", marginTop: 4 }}>
-              {user.email}
-            </p>
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Full Name</label>
-            <input className="form-input" value={form.fullName} onChange={e => setForm({...form, fullName: e.target.value})} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Designation</label>
-            <input className="form-input" value={form.designation} onChange={e => setForm({...form, designation: e.target.value})} />
-          </div>
-        </div>
-        <div className="form-row">
-          <div className="form-group">
-            <label className="form-label">Department</label>
-            <input className="form-input" value={form.department} onChange={e => setForm({...form, department: e.target.value})} />
-          </div>
-          <div className="form-group">
-            <label className="form-label">Faculty ID</label>
-            <input className="form-input" value={form.facultyId} onChange={e => setForm({...form, facultyId: e.target.value})} />
-          </div>
-        </div>
-        <div className="form-group">
-          <label className="form-label">Email <span style={{fontSize: "0.75rem", color: "var(--text-muted)"}}>(Cannot be changed)</span></label>
-          <input className="form-input" value={form.email} disabled style={{ opacity: 0.7, cursor: "not-allowed" }} />
-        </div>
-        <div className="form-group">
-          <label className="form-label">Research Areas / Domain</label>
-          <input className="form-input" value={form.researchDomain} onChange={e => setForm({...form, researchDomain: e.target.value})} placeholder="e.g. Machine Learning, Computer Vision" />
-        </div>
-        <button 
-          className="btn btn-primary btn-lg" 
-          style={{ width: "100%", justifyContent: "center", background: "#10b981", border: "none" }}
-          onClick={handleSave}
-          disabled={saving}
-        >
-          {saving ? "Saving..." : "Save Changes"}
-        </button>
 
-        {toast && (
-          <div style={{ position: "fixed", bottom: 20, right: 20, background: "var(--surface)", border: "1px solid var(--border)", padding: "12px 24px", borderRadius: 8, boxShadow: "0 10px 15px -3px rgba(0,0,0,0.1)", zIndex: 1000 }}>
-            {toast}
-          </div>
-        )}
+      <div className="form-row">
+        <div className="form-group">
+          <label className="form-label">Full Name</label>
+          <input className="form-input" value={form.fullName} onChange={(event) => setForm({ ...form, fullName: event.target.value })} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Designation</label>
+          <input className="form-input" value={form.designation} onChange={(event) => setForm({ ...form, designation: event.target.value })} />
+        </div>
       </div>
-    </>
+
+      <div className="form-row">
+        <div className="form-group">
+          <label className="form-label">Department</label>
+          <input className="form-input" value={form.department} onChange={(event) => setForm({ ...form, department: event.target.value })} />
+        </div>
+        <div className="form-group">
+          <label className="form-label">Faculty ID</label>
+          <input className="form-input" value={form.facultyId} onChange={(event) => setForm({ ...form, facultyId: event.target.value })} />
+        </div>
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Research Domain</label>
+        <input className="form-input" value={form.researchDomain} onChange={(event) => setForm({ ...form, researchDomain: event.target.value })} />
+      </div>
+
+      <div className="form-group">
+        <label className="form-label">Email</label>
+        <input className="form-input" value={form.email} disabled />
+      </div>
+
+      <button className="btn btn-primary btn-lg" onClick={handleSave} disabled={status === "saving"}>
+        {status === "saving" ? "Saving..." : "Save Changes"}
+      </button>
+
+      {message ? <p style={{ marginTop: 16, color: "var(--text-secondary)" }}>{message}</p> : null}
+    </div>
   );
 }

@@ -1,9 +1,10 @@
 import "./globals.css";
+import { APP_COPY, PUBLIC_CONFIG } from "@/lib/config/public";
 
 export const metadata = {
-  title: "Academic Events Hub (AEH) — Never miss a relevant academic opportunity again",
-  description: "The academic pulse of Banaras Hindu University. Discover seminars, workshops, conferences, guest lectures, and training programs across 100+ departments for 30,000+ students.",
-  keywords: "academic events, AEH, BHU, Banaras Hindu University, seminars, workshops, conferences",
+  title: `${PUBLIC_CONFIG.appName} (${PUBLIC_CONFIG.appShortName}) - ${APP_COPY.tagline}`,
+  description: `${APP_COPY.description} Built for ${PUBLIC_CONFIG.universityName}.`,
+  keywords: `academic events, ${PUBLIC_CONFIG.appShortName}, ${PUBLIC_CONFIG.universityName}, seminars, workshops, conferences`,
 };
 
 export default function RootLayout({ children }) {

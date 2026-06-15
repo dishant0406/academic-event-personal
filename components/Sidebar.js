@@ -1,5 +1,8 @@
 "use client";
+import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
+import { fetchApi } from "@/lib/api";
+import { clearStoredSession } from "@/lib/session";
 
 const ROLE_CONFIG = {
   student: {
@@ -8,14 +11,8 @@ const ROLE_CONFIG = {
     color: "#6366f1",
     links: [
       { href: "/student", label: "My Feed", icon: "📰" },
-      { href: "/student/discover", label: "Discover", icon: "🔍" },
       { href: "/student/submit", label: "Create Event", icon: "➕" },
-      { href: "/student/events", label: "My Events", icon: "📋" },
-      { href: "/student/calendar", label: "Calendar", icon: "📅" },
-      { href: "/student/bookmarks", label: "Bookmarks", icon: "⭐" },
-      { href: "/student/registrations", label: "My Registrations", icon: "🎫" },
-      { href: "/student/cross-dept", label: "Cross-Department", icon: "🏛️" },
-      { href: "/student/search", label: "Advanced Search", icon: "🔍" },
+      { href: "/calendar", label: "Calendar", icon: "📅" },
       { href: "/student/profile", label: "My Profile", icon: "👤" },
     ],
   },
@@ -26,9 +23,8 @@ const ROLE_CONFIG = {
     links: [
       { href: "/faculty", label: "Dashboard", icon: "📊" },
       { href: "/faculty/submit", label: "Create Event", icon: "➕" },
-      { href: "/faculty/events", label: "My Events", icon: "📋" },
       { href: "/faculty/analytics", label: "Analytics", icon: "📈" },
-      { href: "/faculty/calendar", label: "Calendar", icon: "📅" },
+      { href: "/calendar", label: "Calendar", icon: "📅" },
       { href: "/faculty/profile", label: "My Profile", icon: "👤" },
     ],
   },
@@ -39,11 +35,7 @@ const ROLE_CONFIG = {
     color: "#f59e0b",
     links: [
       { href: "/admin", label: "Dashboard", icon: "📊" },
-      { href: "/admin/events", label: "All Events", icon: "📋" },
-      { href: "/admin/analytics", label: "Analytics", icon: "📈" },
       { href: "/admin/users", label: "User Management", icon: "👥" },
-      { href: "/admin/featured", label: "Featured Events", icon: "⭐" },
-      { href: "/admin/settings", label: "Settings", icon: "⚙️" },
     ],
   },
 };
@@ -53,17 +45,15 @@ export default function Sidebar({ role }) {
   const router = useRouter();
   const config = ROLE_CONFIG[role];
   
-  const handleLogout = () => {
-    // Clear authentication data from localStorage
-    localStorage.removeItem('authToken');
-    localStorage.removeItem('userRole');
-    localStorage.removeItem('user');
-    
-    // Clear any session storage if used
-    sessionStorage.clear();
-    
-    // Redirect to login page
-    router.push('/login');
+  const handleLogout = async () => {
+    try {
+      await fetchApi("/auth/logout", { method: "POST" });
+    } catch {
+      // Best-effort logout; clear client session regardless.
+    }
+
+    clearStoredSession();
+    router.replace("/login");
   };
   
   if (!config) return null;
@@ -87,15 +77,15 @@ export default function Sidebar({ role }) {
         {config.links.map((link) => {
           const isActive = pathname === link.href;
           return (
-            <a
+            <Link
               key={link.href}
+              href={link.href}
               className={`sidebar-link ${isActive ? "active" : ""}`}
-              onClick={() => router.push(link.href)}
               style={isActive ? { borderLeftColor: config.color, color: config.color, background: config.color + "11" } : {}}
             >
               <span className="sidebar-link-icon">{link.icon}</span>
               {link.label}
-            </a>
+            </Link>
           );
         })}
       </nav>

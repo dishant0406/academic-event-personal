@@ -1,15 +1,14 @@
-const mongoose = require("mongoose");
-require("dotenv").config({ path: "./.env" });
-const Event = require("./models/Event");
+const { Event, EventTag, EventRegistration, Bookmark } = require("./db/models");
+const { connectForScript } = require("./utils/scriptSafety");
 
 async function wipeEvents() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log("Connected to MongoDB for wiping events...");
-
-    const result = await Event.deleteMany({});
-
-    console.log(`Wipe complete. Deleted ${result.deletedCount} events.`);
+    await connectForScript("wipe-events");
+    await EventRegistration.destroy({ where: {} });
+    await Bookmark.destroy({ where: {} });
+    await EventTag.destroy({ where: {} });
+    const count = await Event.destroy({ where: {} });
+    console.log(`Wipe complete. Deleted ${count} events.`);
     process.exit(0);
   } catch (error) {
     console.error("Error during wipe:", error);

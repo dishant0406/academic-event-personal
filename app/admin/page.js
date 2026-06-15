@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect, useMemo } from "react";
 import { fetchApi } from "@/lib/api";
+import { getStoredToken } from "@/lib/session";
 
 function fmtDate(d) {
   if (!d) return "";
@@ -20,7 +21,7 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     const fetchAdminData = async () => {
-      const token = localStorage.getItem("token");
+      const token = getStoredToken();
       if (!token) {
         setLoading(false);
         return;
@@ -69,7 +70,7 @@ export default function AdminDashboard() {
 
   const updateEventStatus = async (id, status) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getStoredToken();
       const res = await fetchApi(`/events/${id}/status`, {
         method: "PUT",
         body: JSON.stringify({ status })
@@ -88,7 +89,7 @@ export default function AdminDashboard() {
 
   const toggleFeatured = async (id) => {
     try {
-      const token = localStorage.getItem("token");
+      const token = getStoredToken();
       const res = await fetchApi(`/events/${id}/featured`, {
         method: "PUT"
       });

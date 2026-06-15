@@ -2,6 +2,8 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/api";
+import { getRoleHomePath } from "@/lib/routes";
+import { setStoredSession } from "@/lib/session";
 
 const ROLES = [
   { id: "student", icon: "🎓", label: "Student & Scholar", color: "#6366f1" },
@@ -33,10 +35,9 @@ export default function LoginPage() {
       const data = await res.json();
       
       if (data.success) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("currentUser", JSON.stringify(data.user));
+        setStoredSession(data.token, data.user);
         setToast("✅ Login successful! Redirecting...");
-        setTimeout(() => router.push(`/${data.user.role}`), 1000);
+        setTimeout(() => router.push(getRoleHomePath(data.user.role)), 1000);
       } else {
         setToast(`❌ ${data.message || "Invalid email or password"}`);
         setTimeout(() => setToast(null), 3000);

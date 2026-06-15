@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { fetchApi } from "@/lib/api";
+import { getStoredToken } from "@/lib/session";
 
 function fmtDate(d) {
   if (!d) return "";
@@ -22,7 +23,7 @@ export default function FacultyDashboard() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      const token = localStorage.getItem("token");
+      const token = getStoredToken();
       if (!token) {
         setLoading(false);
         return;
@@ -80,7 +81,7 @@ export default function FacultyDashboard() {
     if (!form.department) return showToast("⚠️ Please select a department.");
     
     try {
-      const token = localStorage.getItem("token");
+      const token = getStoredToken();
       const res = await fetchApi("/events", {
         method: "POST",
         body: JSON.stringify({

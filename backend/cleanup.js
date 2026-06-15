@@ -1,18 +1,14 @@
-const mongoose = require("mongoose");
-require("dotenv").config({ path: "./.env" });
-const User = require("./models/User");
+const { User } = require("./db/models");
+const { connectForScript } = require("./utils/scriptSafety");
 
 async function cleanup() {
   try {
-    await mongoose.connect(process.env.MONGODB_URI);
-    console.log("Connected to MongoDB for cleanup");
-
-    const result = await User.updateMany(
-      { role: "faculty" },
-      { $unset: { rollNumber: "", year: "" } }
+    await connectForScript("cleanup");
+    const [count] = await User.update(
+      { rollNumber: null, year: null },
+      { where: { role: "faculty" } }
     );
-
-    console.log(`Cleanup complete. Modified ${result.modifiedCount} faculty documents.`);
+    console.log(`Cleanup complete. Modified ${count} faculty records.`);
     process.exit(0);
   } catch (error) {
     console.error("Error during cleanup:", error);

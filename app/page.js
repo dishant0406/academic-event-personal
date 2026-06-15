@@ -1,8 +1,12 @@
 "use client";
 import { useState, useEffect } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { APP_COPY, PUBLIC_CONFIG } from "@/lib/config/public";
 import { FEATURES, DEPARTMENTS, EVENT_TYPES } from "@/lib/data";
 import { fetchApi } from "@/lib/api";
+import { getRoleHomePath } from "@/lib/routes";
+import { getStoredUser } from "@/lib/session";
 import { socket } from "@/lib/socket";
 
 function fmtDate(d) {
@@ -48,13 +52,9 @@ export default function Home() {
     fetchFeatured();
     
     // Check auth
-    const storedUser = localStorage.getItem("currentUser");
+    const storedUser = getStoredUser();
     if (storedUser) {
-      try {
-        const parsed = JSON.parse(storedUser);
-        setUser(parsed);
-        // If user has subscribed subjects, default to showing them? (Optional MVP enhancement)
-      } catch(e) {}
+      setUser(storedUser);
     }
   }, []);
   
@@ -183,10 +183,10 @@ export default function Home() {
         <div className="navbar-actions" style={{ display: "flex", gap: 12, alignItems: "center" }}>
           {user && (
             <>
-              <button className="btn btn-ghost btn-sm desktop-only" onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
+              <button className="btn btn-ghost btn-sm desktop-only" onClick={() => router.push(getRoleHomePath(user.role))}>
                 📊 Dashboard
               </button>
-              <div className="user-avatar" style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--accent-primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", cursor: "pointer" }} onClick={() => router.push(user.role === "admin" ? "/admin/dashboard" : "/dashboard")}>
+              <div className="user-avatar" style={{ width: 36, height: 36, borderRadius: "50%", background: "var(--accent-primary)", color: "white", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: "bold", cursor: "pointer" }} onClick={() => router.push(getRoleHomePath(user.role))}>
                 {user.fullName.charAt(0)}
               </div>
             </>
@@ -210,7 +210,7 @@ export default function Home() {
           <a href="#events" onClick={() => setIsMobileMenuOpen(false)}>🎟️ Events</a>
           <a href="/calendar" onClick={() => setIsMobileMenuOpen(false)}>🗓️ Calendar</a>
           {user ? (
-            <a href={user.role === "admin" ? "/admin/dashboard" : "/dashboard"} onClick={() => setIsMobileMenuOpen(false)} style={{ color: "var(--accent-primary)", fontWeight: 700 }}>
+            <a href={getRoleHomePath(user.role)} onClick={() => setIsMobileMenuOpen(false)} style={{ color: "var(--accent-primary)", fontWeight: 700 }}>
               📊 Dashboard
             </a>
           ) : (
@@ -232,7 +232,7 @@ export default function Home() {
           <span className="bottom-nav-icon">🗓️</span>
           <span className="bottom-nav-label">Calendar</span>
         </div>
-        <div className="bottom-nav-item" onClick={() => router.push(user ? (user.role === 'admin' ? '/admin/dashboard' : '/dashboard') : '/login')}>
+        <div className="bottom-nav-item" onClick={() => router.push(user ? getRoleHomePath(user.role) : '/login')}>
           <span className="bottom-nav-icon">{user ? '📊' : '🔑'}</span>
           <span className="bottom-nav-label">{user ? 'Dashboard' : 'Sign In'}</span>
         </div>
@@ -258,7 +258,7 @@ export default function Home() {
       <section className="hero">
         <div className="orb orb-1" /><div className="orb orb-2" /><div className="orb orb-3" />
         <div className="hero-content fade-in">
-          <div className="hero-badge">🎓 IIT BHU & Beyond</div>
+          <div className="hero-badge">{PUBLIC_CONFIG.universityName} & Beyond</div>
           <h1>Discover Every Academic Event On Campus</h1>
           <p>One platform to find seminars, workshops, conferences, guest lectures, and training programs. Never miss a relevant academic opportunity again.</p>
           <div className="hero-stats">
@@ -487,7 +487,7 @@ export default function Home() {
       {/* FEATURES */}
       <section id="features" className="section reveal">
         <div className="section-header">
-          <h2>Why AEH?</h2>
+          <h2>Why {PUBLIC_CONFIG.appShortName}?</h2>
           <p>Built for the unique needs of large universities</p>
         </div>
         <div className="features-grid">
@@ -505,14 +505,14 @@ export default function Home() {
       <footer className="footer">
         <div className="footer-grid">
           <div className="footer-brand">
-            <h3>⚡ Academic Events Hub</h3>
-            <p>Never miss a relevant academic opportunity again. The academic pulse of your campus — built for Banaras Hindu University and beyond.</p>
+            <h3>{PUBLIC_CONFIG.appName}</h3>
+            <p>{APP_COPY.description} Built for {PUBLIC_CONFIG.universityName} and beyond.</p>
           </div>
-          <div className="footer-col"><h4>Platform</h4><a href="#">Discover</a><a href="#">Calendar</a><a href="#">Submit Event</a></div>
+          <div className="footer-col"><h4>Platform</h4><Link href="/">Discover</Link><Link href="/calendar">Calendar</Link><Link href="/login">Submit Event</Link></div>
           <div className="footer-col"><h4>Resources</h4><a href="#">Documentation</a><a href="#">API Access</a><a href="#">Help Center</a></div>
-          <div className="footer-col"><h4>Contact</h4><a href="#">support@aeh.bhu.ac.in</a><a href="#">Varanasi, UP 221005</a></div>
+          <div className="footer-col"><h4>Contact</h4><a href={`mailto:${PUBLIC_CONFIG.supportEmail}`}>{PUBLIC_CONFIG.supportEmail}</a><a href={PUBLIC_CONFIG.siteUrl}>{PUBLIC_CONFIG.universityName}</a></div>
         </div>
-        <div className="footer-bottom">© 2026 Academic Events Hub (AEH) — Never miss a relevant academic opportunity again. Made with ❤️ at BHU.</div>
+        <div className="footer-bottom">© 2026 {PUBLIC_CONFIG.appName} ({PUBLIC_CONFIG.appShortName}) - {APP_COPY.tagline}.</div>
       </footer>
     </>
   );

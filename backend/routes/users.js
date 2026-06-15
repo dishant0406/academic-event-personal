@@ -1,140 +1,110 @@
 const express = require("express");
-const mongoose = require("mongoose");
-const User = require("../models/User");
-const Event = require("../models/Event");
+const { Op } = require("sequelize");
+const { sequelize, User, Event, EventTag, Bookmark } = require("../db/models");
 const { protect, authorize, invalidateUserCache } = require("../middleware/auth");
+const { parseId } = require("../utils/id");
+const { replaceUserPreferences } = require("../utils/dbCollections");
+const { serializeEvent, serializeUser } = require("../utils/serializers");
 
 const router = express.Router();
 
-// ═══════════════════════════════════════════════════════════════════════════
-// POST /api/users/bookmarks/:id  — Toggle bookmark for an event
-// ═══════════════════════════════════════════════════════════════════════════
+const eventInclude = [
+  { model: User, as: "createdBy", attributes: ["id", "fullName", "email", "role", "department"] },
+  { model: EventTag, as: "tagItems" },
+  { association: "registeredUsers", attributes: ["id"], through: { attributes: [] } },
+];
+
 router.post("/bookmarks/:id", protect, async (req, res) => {
+  const eventId = parseId(req.params.id);
+  if (!eventId) {
+    return res.status(400).json({ success: false, message: "Invalid event ID." });
+  }
+
+  const transaction = await sequelize.transaction();
+
   try {
-    if (!mongoose.Types.ObjectId.isValid(req.params.id)) {
-      return res.status(400).json({ success: false, message: "Invalid event ID." });
-    }
-
-    const eventId = req.params.id;
-    const userId = req.user._id;
-
-    // Check if event exists
-    const event = await Event.findById(eventId, "_id").lean();
+    const event = await Event.findByPk(eventId, { transaction });
     if (!event) {
+      await transaction.rollback();
       return res.status(404).json({ success: false, message: "Event not found." });
     }
 
-    // Toggle bookmark
-    const user = await User.findById(userId, "bookmarks").lean();
-    const isBookmarked = user.bookmarks.some(id => id.toString() === eventId.toString());
-
-    let updatedUser;
-    if (isBookmarked) {
-      // Remove bookmark
-      updatedUser = await User.findByIdAndUpdate(
-        userId,
-        { $pull: { bookmarks: eventId } },
-        { new: true }
-      );
+    const existing = await Bookmark.findOne({ where: { userId: req.user.id, eventId }, transaction });
+    if (existing) {
+      await existing.destroy({ transaction });
     } else {
-      // Add bookmark
-      updatedUser = await User.findByIdAndUpdate(
-        userId,
-        { $addToSet: { bookmarks: eventId } },
-        { new: true }
-      );
+      await Bookmark.create({ userId: req.user.id, eventId }, { transaction });
     }
 
-    // Invalidate auth cache so the next /me call is fresh
-    invalidateUserCache(userId.toString());
+    await transaction.commit();
+    invalidateUserCache(String(req.user.id));
 
-    res.status(200).json({
-      success: true,
-      message: isBookmarked ? "Bookmark removed." : "Event bookmarked.",
-      bookmarks: updatedUser.bookmarks
-    });
+    const bookmarks = await Bookmark.findAll({ where: { userId: req.user.id }, attributes: ["eventId"] });
+    res.status(200).json({ success: true, message: existing ? "Bookmark removed." : "Event bookmarked.", bookmarks: bookmarks.map((item) => item.eventId) });
   } catch (error) {
+    await transaction.rollback();
     console.error("Bookmark Error:", error);
     res.status(500).json({ success: false, message: "Failed to toggle bookmark." });
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// PATCH /api/users/preferences  — Update subject subscriptions
-// ═══════════════════════════════════════════════════════════════════════════
 router.patch("/preferences", protect, async (req, res) => {
+  const transaction = await sequelize.transaction();
+
   try {
-    const { subscribedSubjects, interests } = req.body;
+    const currentUser = await User.findByPk(req.user.id, { include: [{ association: "preferenceItems" }], transaction });
+    const current = serializeUser(currentUser);
+    const payload = {
+      interests: req.body.interests !== undefined ? req.body.interests : current.interests,
+      subscribedSubjects: req.body.subscribedSubjects !== undefined ? req.body.subscribedSubjects : current.subscribedSubjects,
+    };
 
-    let updateFields = {};
-    if (Array.isArray(subscribedSubjects)) updateFields.subscribedSubjects = subscribedSubjects;
-    if (Array.isArray(interests)) updateFields.interests = interests;
+    await replaceUserPreferences(req.user.id, payload, transaction);
+    await transaction.commit();
+    invalidateUserCache(String(req.user.id));
 
-    if (Object.keys(updateFields).length === 0) {
-      return res.status(400).json({ success: false, message: "No valid arrays provided." });
-    }
-
-    const updatedUser = await User.findByIdAndUpdate(
-      req.user._id,
-      updateFields,
-      { new: true }
-    );
-
-    invalidateUserCache(req.user._id.toString());
-
-    res.status(200).json({
-      success: true,
-      message: "Preferences updated.",
-      subscribedSubjects: updatedUser.subscribedSubjects,
-      interests: updatedUser.interests
-    });
+    res.status(200).json({ success: true, message: "Preferences updated.", interests: payload.interests, subscribedSubjects: payload.subscribedSubjects });
   } catch (error) {
+    await transaction.rollback();
     console.error("Preferences Update Error:", error);
     res.status(500).json({ success: false, message: "Failed to update preferences." });
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// GET /api/users/dashboard  — Dashboard data (registered, recommended, bookmarks)
-// ═══════════════════════════════════════════════════════════════════════════
 router.get("/dashboard", protect, async (req, res) => {
   try {
-    const userId = req.user._id;
-    
-    // 1. Registered Events
-    const registeredEvents = await Event.find({ registeredUsers: userId }).lean();
-    
-    // 2. Bookmarked Events
-    const user = await User.findById(userId).populate("bookmarks").lean();
-    const bookmarkedEvents = user.bookmarks || [];
-    
-    // 3. Recommended Events
-    const subjects = user.subscribedSubjects || [];
-    let query = { status: "approved", date: { $gte: new Date() } };
-    
+    const user = await User.findByPk(req.user.id, {
+      include: [
+        { association: "preferenceItems" },
+        { association: "bookmarkedEvents", include: eventInclude, through: { attributes: [] } },
+        { association: "registeredEvents", include: eventInclude, through: { attributes: [] } },
+      ],
+    });
+
+    const serializedUser = serializeUser(user);
+    const now = new Date();
     let recommendedEvents = [];
-    if (subjects.length > 0) {
-      query.$or = [
-        { department: { $in: subjects.map(s => new RegExp(s, 'i')) } },
-        { tags: { $in: subjects.map(s => new RegExp(s, 'i')) } },
-        { subjectTags: { $in: subjects.map(s => new RegExp(s, 'i')) } }
-      ];
-      recommendedEvents = await Event.find(query).sort({ date: 1 }).limit(6).lean();
+
+    const interests = [...serializedUser.interests, ...serializedUser.subscribedSubjects].map((value) => value.toLowerCase());
+    const candidates = await Event.findAll({ where: { status: "approved", date: { [Op.gte]: now } }, include: eventInclude, order: [["date", "ASC"]], limit: 30 });
+
+    if (interests.length > 0) {
+      recommendedEvents = candidates.filter((event) => {
+        const serializedEvent = serializeEvent(event);
+        const values = [serializedEvent.department, ...serializedEvent.tags, ...serializedEvent.subjectTags].map((value) => String(value).toLowerCase());
+        return interests.some((interest) => values.includes(interest));
+      });
     }
-    
-    // Fallback if no specific recommendations found
+
     if (recommendedEvents.length === 0) {
-      recommendedEvents = await Event.find({ status: "approved", date: { $gte: new Date() } })
-        .sort({ date: 1 })
-        .limit(6)
-        .lean();
+      recommendedEvents = candidates.slice(0, 6);
     }
 
     res.status(200).json({
       success: true,
-      registeredEvents,
-      bookmarkedEvents,
-      recommendedEvents
+      registeredEvents: user.registeredEvents.map(serializeEvent),
+      bookmarkedEvents: user.bookmarkedEvents.map(serializeEvent),
+      recommendedEvents: recommendedEvents.slice(0, 6).map(serializeEvent),
     });
   } catch (error) {
     console.error("Dashboard Error:", error);
@@ -142,13 +112,20 @@ router.get("/dashboard", protect, async (req, res) => {
   }
 });
 
-// ═══════════════════════════════════════════════════════════════════════════
-// GET /api/users  — Fetch all users (Admin only)
-// ═══════════════════════════════════════════════════════════════════════════
-router.get("/", protect, authorize("admin"), async (req, res) => {
+router.get("/my-events", protect, async (req, res) => {
   try {
-    const users = await User.find({}, "fullName email role department").lean();
-    res.status(200).json({ success: true, users });
+    const events = await Event.findAll({ where: { createdById: req.user.id }, include: eventInclude, order: [["date", "ASC"]] });
+    res.status(200).json({ success: true, events: events.map(serializeEvent) });
+  } catch (error) {
+    console.error("My Events Error:", error);
+    res.status(500).json({ success: false, message: "Failed to fetch your events." });
+  }
+});
+
+router.get("/", protect, authorize("admin"), async (_req, res) => {
+  try {
+    const users = await User.findAll({ attributes: ["id", "fullName", "email", "role", "department"] });
+    res.status(200).json({ success: true, users: users.map(serializeUser) });
   } catch (error) {
     console.error("Fetch Users Error:", error);
     res.status(500).json({ success: false, message: "Failed to fetch users." });

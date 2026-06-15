@@ -1,17 +1,19 @@
 const nodemailer = require("nodemailer");
+const { env } = require("../config/env");
+const { DEFAULT_FROM_NAME } = require("../config/constants");
 
 const sendEmail = async (options) => {
   // Generate test SMTP service account from ethereal.email if no actual SMTP is provided
   // Ethereal is a mock email service designed for testing
   let transporter;
   
-  if (process.env.SMTP_HOST) {
+  if (env.SMTP_HOST) {
     transporter = nodemailer.createTransport({
-      host: process.env.SMTP_HOST,
-      port: process.env.SMTP_PORT,
+      host: env.SMTP_HOST,
+      port: env.SMTP_PORT,
       auth: {
-        user: process.env.SMTP_EMAIL,
-        pass: process.env.SMTP_PASSWORD,
+        user: env.SMTP_EMAIL,
+        pass: env.SMTP_PASSWORD,
       },
     });
   } else {
@@ -30,7 +32,7 @@ const sendEmail = async (options) => {
   }
 
   const message = {
-    from: `"${process.env.FROM_NAME || 'AEH Admin'}" <${process.env.SMTP_EMAIL || 'noreply@aeh.bhu.ac.in'}>`,
+    from: `"${DEFAULT_FROM_NAME}" <${env.SMTP_EMAIL || 'noreply@academicevents.local'}>`,
     to: options.email,
     subject: options.subject,
     text: options.message,
@@ -39,7 +41,7 @@ const sendEmail = async (options) => {
 
   const info = await transporter.sendMail(message);
 
-  if (!process.env.SMTP_HOST) {
+  if (!env.SMTP_HOST) {
     console.log("✉️ Preview URL: %s", nodemailer.getTestMessageUrl(info));
   }
 };

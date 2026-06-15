@@ -6,30 +6,22 @@ const cookieParser = require("cookie-parser");
 const helmet       = require("helmet");
 const compression  = require("compression");
 const morgan       = require("morgan");
-const rateLimit    = require("express-rate-limit");
-const dotenv       = require("dotenv");
-const mongoose     = require("mongoose");
-dotenv.config();
+const { connectDB } = require("./config/db");
+const { env, validateEnv } = require("./config/env");
+const { APP_NAME } = require("./config/constants");
+const { authLimiter, globalLimiter } = require("./middleware/rateLimit");
+
+validateEnv();
 
 const app = express();
+app.set("io", null);
 
-// Ensure DB connection for Serverless environments (Vercel)
 app.use(async (req, res, next) => {
   try {
-    if (mongoose.connection.readyState !== 1) {
-      const uri = process.env.MONGODB_URI && process.env.MONGODB_URI.includes("imashish412_db_user") && !process.env.MONGODB_URI.includes("<db_password>") 
-        ? process.env.MONGODB_URI 
-        : "mongodb://imashish412_db_user:ashish1712@ac-ajcq3fv-shard-00-00.mmhmxki.mongodb.net:27017,ac-ajcq3fv-shard-00-01.mmhmxki.mongodb.net:27017,ac-ajcq3fv-shard-00-02.mmhmxki.mongodb.net:27017/campusbuzz?ssl=true&replicaSet=atlas-d2tpbz-shard-0&authSource=admin&retryWrites=true&w=majority&appName=Cluster0";
-      
-      await mongoose.connect(uri, {
-        serverSelectionTimeoutMS: 5000,
-        socketTimeoutMS: 45000,
-        family: 4, // Force IPv4 (Vercel Serverless fix)
-      });
-    }
+    await connectDB();
     next();
   } catch (error) {
-    console.error("MongoDB Connection Error:", error);
+    console.error("Database Connection Error:", error);
     res.status(500).json({ success: false, message: "Database connection failed", error: error.message });
   }
 });
@@ -54,14 +46,11 @@ app.use(express.urlencoded({ extended: true, limit: "1mb" }));
 app.use(cookieParser());
 
 // CORS configuration
-const allowedOrigins = (process.env.ALLOWED_ORIGINS || "http://localhost:3000")
-  .split(",")
-  .map((o) => o.trim());
+const allowedOrigins = env.ALLOWED_ORIGINS;
 
 app.use(cors({
   origin: (origin, cb) => {
-    // Allow server-to-server calls or whitelisted origins
-    if (!origin || allowedOrigins.includes(origin) || origin.includes("vercel.app")) return cb(null, true);
+    if (!origin || allowedOrigins.includes(origin)) return cb(null, true);
     cb(new Error(`CORS blocked: ${origin}`));
   },
   credentials: true,
@@ -76,17 +65,10 @@ app.use(morgan("combined", {
 }));
 
 // Global Limiter
-const globalLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 500,
-  standardHeaders: true,
-  legacyHeaders: false,
-  message: { success: false, message: "Too many requests. Please slow down." },
-});
 app.use(globalLimiter);
 
 // Routes
-app.use("/api/auth",      require("./routes/auth"));
+app.use("/api/auth", authLimiter, require("./routes/auth"));
 app.use("/api/events",    require("./routes/events"));
 app.use("/api/users",     require("./routes/users"));
 app.use("/api/analytics", require("./routes/analytics"));
@@ -95,7 +77,7 @@ app.use("/api/analytics", require("./routes/analytics"));
 app.get("/api/health", (req, res) => {
   res.status(200).json({
     success: true,
-    message: "⚡ Academic Events Hub (AEH) API is running on Vercel Serverless",
+    message: `${APP_NAME} API is healthy`,
     timestamp: new Date().toISOString(),
   });
 });
@@ -112,20 +94,11 @@ app.use((err, req, res, _next) => {
   }
   console.error("Error:", err);
   res.status(err.status || 500).json({
-    success: false,
-    message: process.env.NODE_ENV === "production"
+      success: false,
+      message: env.NODE_ENV === "production"
       ? "Internal server error"
       : err.message,
   });
 });
 
-// Export the app for Vercel Serverless deployment
 module.exports = app;
-
-// If running locally, listen on a port
-if (process.env.NODE_ENV !== "production") {
-  const PORT = process.env.PORT || 5000;
-  app.listen(PORT, () => {
-    console.log(`✅ Server running locally on port ${PORT}`);
-  });
-}

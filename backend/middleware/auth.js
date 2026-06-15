@@ -1,8 +1,9 @@
 const jwt  = require("jsonwebtoken");
 const User = require("../models/User");
+const { env } = require("../config/env");
 
 // ─── Tiny in-process LRU cache for authenticated users ────────────────────
-// Avoids a MongoDB round-trip on every protected request.
+// Avoids a database round-trip on every protected request.
 // At 10 000 concurrent users each making ~10 req/s, this removes
 // 100 000+ DB reads per second and cuts p99 auth latency by ~30 ms.
 //
@@ -35,8 +36,8 @@ const invalidateUserCache = (userId) => userCache.delete(userId);
 
 // ── Generate JWT token ─────────────────────────────────────────────────────
 const generateToken = (userId) => {
-  return jwt.sign({ id: userId }, process.env.JWT_SECRET, {
-    expiresIn: process.env.JWT_EXPIRES_IN || "7d",
+  return jwt.sign({ id: userId }, env.JWT_SECRET, {
+    expiresIn: env.JWT_EXPIRES_IN,
   });
 };
 
@@ -60,10 +61,10 @@ const protect = async (req, res, next) => {
 
     // Verify signature (synchronous — no I/O)
     let decoded;
-    try {
-      decoded = jwt.verify(token, process.env.JWT_SECRET);
-    } catch {
-      return res.status(401).json({
+      try {
+        decoded = jwt.verify(token, env.JWT_SECRET);
+      } catch {
+        return res.status(401).json({
         success: false,
         message: "Invalid or expired token. Please log in again.",
       });
@@ -72,14 +73,16 @@ const protect = async (req, res, next) => {
     // Try cache first, fall back to DB
     let user = getCachedUser(decoded.id);
     if (!user) {
-      user = await User.findById(decoded.id).lean(); // .lean() = plain object, faster
+      user = await User.findByPk(decoded.id);
       if (!user) {
         return res.status(401).json({
           success: false,
           message: "User no longer exists.",
         });
       }
-      setCachedUser(decoded.id, user);
+      const plainUser = user.toJSON();
+      setCachedUser(decoded.id, plainUser);
+      user = plainUser;
     }
 
     req.user = user;

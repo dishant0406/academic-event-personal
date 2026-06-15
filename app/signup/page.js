@@ -2,6 +2,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/api";
+import { setStoredSession } from "@/lib/session";
 
 const IITBHU_DATA = {
   "Computer Science & Engineering": ["Artificial Intelligence", "Machine Learning", "Computer Vision", "Systems and Security", "Theoretical Computer Science"],
@@ -74,8 +75,7 @@ export default function SignupPage() {
       const data = await res.json();
       
       if (data.success) {
-        localStorage.setItem("token", data.token);
-        localStorage.setItem("currentUser", JSON.stringify(data.user));
+        setStoredSession(data.token, data.user);
         setSuccess(true);
       } else {
         showToast(`❌ ${data.message || "Failed to create account"}`);

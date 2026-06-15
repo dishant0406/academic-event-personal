@@ -2,6 +2,8 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { fetchApi } from '@/lib/api';
+import { getStoredToken } from '@/lib/session';
 
 export default function SubmitEventPage() {
   const router = useRouter();
@@ -40,7 +42,7 @@ export default function SubmitEventPage() {
     setLoading(true);
 
     try {
-      const token = localStorage.getItem('token');
+      const token = getStoredToken();
       if (!token) {
         showToast('Authentication error: No token found. Please log in.', 'error');
         setLoading(false);
@@ -54,12 +56,8 @@ export default function SubmitEventPage() {
         tags: formData.tags ? formData.tags.split(',').map(tag => tag.trim()).filter(Boolean) : []
       };
 
-      const res = await fetch('https://academic-event-7bk1.vercel.app/api/events', {
+      const res = await fetchApi('/events', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`
-        },
         body: JSON.stringify(payload)
       });
 

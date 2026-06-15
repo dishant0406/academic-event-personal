@@ -1,6 +1,7 @@
 "use client";
 import { useState, useEffect } from "react";
 import { fetchApi } from "@/lib/api";
+import { getStoredToken } from "@/lib/session";
 
 function fmtDate(d) {
   return new Date(d).toLocaleDateString("en-IN", { day: "numeric", month: "short", year: "numeric" });
@@ -24,7 +25,7 @@ export default function StudentDashboard() {
 
   useEffect(() => {
     const fetchDashboardData = async () => {
-      const token = localStorage.getItem("token");
+      const token = getStoredToken();
       if (!token) {
          setLoading(false);
          return;
@@ -71,7 +72,7 @@ export default function StudentDashboard() {
 
   const handleUpdateinterests = async (newinterests) => {
     setUserinterests(newinterests);
-    const token = localStorage.getItem("token");
+    const token = getStoredToken();
     if (!token) return;
     try {
       await fetchApi("/users/preferences", {
@@ -88,7 +89,7 @@ export default function StudentDashboard() {
   };
   
   const handleRegister = async (id) => {
-    const token = localStorage.getItem("token");
+    const token = getStoredToken();
     if (!token) return;
     
     try {
