@@ -31,6 +31,7 @@ app.set("trust proxy", 1);
 
 // Security headers
 app.use(helmet({
+  crossOriginOpenerPolicy: { policy: "same-origin-allow-popups" },
   crossOriginResourcePolicy: { policy: "cross-origin" },
   contentSecurityPolicy: false,
 }));

@@ -42,7 +42,7 @@ function initUserModel(sequelize) {
           this.setDataValue("email", String(value).trim().toLowerCase());
         },
       },
-      password: { type: DataTypes.STRING, allowNull: false },
+      password: { type: DataTypes.STRING, allowNull: true, defaultValue: null },
       role: {
         type: DataTypes.ENUM("student", "faculty", "admin"),
         allowNull: false,
@@ -55,6 +55,11 @@ function initUserModel(sequelize) {
       supervisor: DataTypes.STRING,
       designation: DataTypes.STRING,
       facultyId: DataTypes.STRING,
+      googleId: {
+        type: DataTypes.STRING,
+        allowNull: true,
+        unique: true,
+      },
       isVerified: { type: DataTypes.BOOLEAN, defaultValue: false },
       resetPasswordToken: DataTypes.STRING,
       resetPasswordExpire: DataTypes.DATE,
@@ -82,10 +87,12 @@ function initUserModel(sequelize) {
       },
       hooks: {
         async beforeCreate(user) {
-          user.password = await bcrypt.hash(user.password, 12);
+          if (user.password) {
+            user.password = await bcrypt.hash(user.password, 12);
+          }
         },
         async beforeUpdate(user) {
-          if (user.changed("password")) {
+          if (user.changed("password") && user.password) {
             user.password = await bcrypt.hash(user.password, 12);
           }
         },

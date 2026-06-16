@@ -26,6 +26,8 @@ const env = Object.freeze({
   JWT_SECRET: process.env.JWT_SECRET || "",
   JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN || DEFAULT_TOKEN_TTL,
   ADMIN_CODE: process.env.ADMIN_CODE || "",
+  GOOGLE_CLIENT_ID: process.env.GOOGLE_CLIENT_ID || "",
+  GOOGLE_ALLOWED_HOSTED_DOMAIN: process.env.GOOGLE_ALLOWED_HOSTED_DOMAIN || "",
   FRONTEND_BASE_URL: trimTrailingSlash(
     process.env.FRONTEND_BASE_URL ||
       process.env.NEXT_PUBLIC_FRONTEND_URL ||

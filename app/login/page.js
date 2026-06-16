@@ -4,6 +4,7 @@ import { useRouter } from "next/navigation";
 import { fetchApi } from "@/lib/api";
 import { getRoleHomePath } from "@/lib/routes";
 import { setStoredSession } from "@/lib/session";
+import GoogleSignInButton from "@/components/auth/GoogleSignInButton";
 
 const ROLES = [
   { id: "student", icon: "🎓", label: "Student & Scholar", color: "#6366f1" },
@@ -21,9 +22,27 @@ export default function LoginPage() {
 
   const selectedRole = ROLES.find(r => r.id === role);
 
+  const showToast = (message) => {
+    setToast(message);
+    setTimeout(() => setToast(null), 3000);
+  };
+
+  const handleGoogleAuthenticated = (data) => {
+    setStoredSession(data.token, data.user);
+    showToast("Signed in with Google. Redirecting...");
+    setTimeout(() => router.push(getRoleHomePath(data.user.role)), 600);
+  };
+
+  const handleGoogleProfileRequired = (profile) => {
+    if (profile && typeof window !== "undefined") {
+      window.sessionStorage.setItem("googleSignupProfile", JSON.stringify(profile));
+    }
+    router.push("/signup/google");
+  };
+
   const handleLogin = async () => {
-    if (!email.trim()) { setToast("⚠️ Please enter your email"); setTimeout(() => setToast(null), 3000); return; }
-    if (!password.trim()) { setToast("⚠️ Please enter your password"); setTimeout(() => setToast(null), 3000); return; }
+    if (!email.trim()) { showToast("Please enter your email"); return; }
+    if (!password.trim()) { showToast("Please enter your password"); return; }
 
     setLoading(true);
     try {
@@ -36,15 +55,13 @@ export default function LoginPage() {
       
       if (data.success) {
         setStoredSession(data.token, data.user);
-        setToast("✅ Login successful! Redirecting...");
-        setTimeout(() => router.push(getRoleHomePath(data.user.role)), 1000);
+        showToast("Login successful. Redirecting...");
+        setTimeout(() => router.push(getRoleHomePath(data.user.role)), 600);
       } else {
-        setToast(`❌ ${data.message || "Invalid email or password"}`);
-        setTimeout(() => setToast(null), 3000);
+        showToast(data.message || "Invalid email or password");
       }
     } catch (err) {
-      setToast("❌ Server error. Please verify the backend is running.");
-      setTimeout(() => setToast(null), 3000);
+      showToast("Server error. Please verify the backend is running.");
     } finally {
       setLoading(false);
     }
@@ -81,6 +98,14 @@ export default function LoginPage() {
             </button>
           ))}
         </div>
+        <GoogleSignInButton
+          disabled={loading}
+          onAuthenticated={handleGoogleAuthenticated}
+          onProfileRequired={handleGoogleProfileRequired}
+          onError={showToast}
+        />
+
+        <div className="auth-divider">or use password</div>
 
         <div className="auth-form">
           <div className="form-group">
