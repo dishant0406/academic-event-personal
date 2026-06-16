@@ -238,6 +238,149 @@ Backend default URL: `http://localhost:4000`
 npm run local:doctor
 ```
 
+## Viewing the Local MySQL Database with DBeaver on Windows
+
+DBeaver Community is a free GUI for opening the local MySQL database, browsing tables, viewing rows, and running SQL without using the MySQL command line.
+
+### 1. Confirm the app database exists
+
+From the project folder, run the normal local setup first:
+
+```bash
+npm run local:setup
+```
+
+This creates/syncs the local database and runs the Google auth migration. If you only need to repair the Google auth columns, run:
+
+```bash
+npm --prefix backend run db:migrate:gauth
+```
+
+### 2. Install DBeaver Community
+
+1. Open `https://dbeaver.io/download/`.
+2. Download **DBeaver Community** for **Windows**.
+3. Run the installer.
+4. Keep the default install options unless your machine requires a custom location.
+5. Open **DBeaver** from the Start menu.
+
+### 3. Create a MySQL connection
+
+1. In DBeaver, click **New Database Connection**.
+   - It may be a plug icon with a plus sign.
+   - You can also use **Database** → **New Database Connection** from the top menu.
+2. Search for `MySQL`.
+3. Select **MySQL**.
+4. Click **Next**.
+5. Enter the same values from `backend/.env`:
+
+   ```text
+   Server Host: 127.0.0.1
+   Port: 3306
+   Database: academic_events_local
+   Username: academic_events
+   Password: academic_events_local_password
+   ```
+
+6. Click **Test Connection**.
+7. If DBeaver asks to download the MySQL driver, click **Download**.
+8. After the test succeeds, click **Finish**.
+
+If your `backend/.env` has different database values, use those instead. The connection must match:
+
+```env
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_NAME=academic_events_local
+DB_USER=academic_events
+DB_PASSWORD=academic_events_local_password
+```
+
+### 4. Open and view tables
+
+1. In the left sidebar, expand your new connection.
+2. Expand the database:
+
+   ```text
+   academic_events_local
+   ```
+
+3. Expand **Tables**.
+4. Double-click a table, for example:
+
+   ```text
+   User
+   Event
+   Bookmark
+   EventRegistration
+   UserPreference
+   ```
+
+5. Click the **Data** tab to view rows.
+6. Click the **Properties** or **Columns** tab to view the table structure.
+
+For Google sign-in, open the `User` table and confirm the columns include:
+
+```text
+google_id
+password
+email
+role
+is_verified
+```
+
+Google-only users should have `google_id` filled and `password` set to `NULL`.
+
+### 5. Run SQL manually in DBeaver
+
+1. Right-click the connection or database.
+2. Click **SQL Editor** → **New SQL Script**.
+3. Paste a query, for example:
+
+   ```sql
+   SELECT id, full_name, email, role, google_id, is_verified
+   FROM User
+   ORDER BY id DESC;
+   ```
+
+4. Press **Ctrl + Enter** to run the query.
+
+Useful local checks:
+
+```sql
+SHOW TABLES;
+DESCRIBE User;
+SELECT id, email, google_id FROM User WHERE google_id IS NOT NULL;
+```
+
+### 6. Editing data safely
+
+You can edit cells directly in the **Data** tab, but be careful:
+
+1. Click a cell.
+2. Change the value.
+3. Click **Save** in DBeaver's bottom toolbar or press **Ctrl + S**.
+
+Avoid editing these unless you know exactly why:
+
+```text
+id
+password
+google_id
+reset_password_token
+reset_password_expire
+```
+
+Do not paste plain-text passwords into the `password` column. Passwords must be created through the app so they are bcrypt-hashed.
+
+### 7. Common DBeaver connection problems
+
+- **Connection refused**: MySQL is not running. Start MySQL, then try **Test Connection** again.
+- **Access denied for user**: the username or password does not match `backend/.env`.
+- **Unknown database**: run `npm run local:setup`, then reconnect.
+- **No tables shown**: right-click the connection and click **Refresh**.
+- **Missing `google_id` in `User`**: run `npm --prefix backend run db:migrate:gauth`, then refresh the `User` table.
+
 ## Quality Checks
 
 Run the full verification loop:
