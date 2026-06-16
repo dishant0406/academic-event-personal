@@ -5,6 +5,7 @@ try {
   ensureMysqlInstalled();
   run("npm run db:bootstrap", { cwd: backendRoot });
   run("npm run db:sync", { cwd: backendRoot });
+  run("npm run db:migrate:gauth", { cwd: backendRoot });
   console.log("Local setup completed.");
 } catch (error) {
   console.error(`Local setup failed: ${error.message}`);

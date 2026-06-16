@@ -122,13 +122,13 @@ When this is set, the backend checks Google's verified `hd` claim. Do not use th
 
 ### 5. Prepare the local database for Google users
 
-Run the Google auth migration once after configuring the backend env:
+`npm run local:setup` and `npm run local:start` run the Google auth migration automatically. For an existing local database, run it manually once if Google sign-in fails with a missing `google_id` column:
 
 ```bash
 npm --prefix backend run db:migrate:gauth
 ```
 
-This makes password nullable for Google-only accounts and adds the unique `google_id` column.
+The migration is idempotent. It makes password nullable for Google-only accounts and adds the unique `google_id` column.
 
 ### 6. Start and test locally
 
@@ -200,6 +200,7 @@ ALLOWED_ORIGINS=https://your-production-domain.com,https://www.your-production-d
 - `Google sign-in is not configured`: set `NEXT_PUBLIC_GOOGLE_CLIENT_ID` in `.env.local` and restart the frontend.
 - `Google sign-in is not configured on the server`: set `GOOGLE_CLIENT_ID` in `backend/.env` and restart the backend.
 - `Google sign-in session expired`: retry sign-in; the backend nonce cookie is short-lived.
+- `Google auth database migration has not been run`: run `npm --prefix backend run db:migrate:gauth`, then restart the backend.
 - Workspace/domain rejection: clear `GOOGLE_ALLOWED_HOSTED_DOMAIN` or sign in with an account from that Google Workspace domain.
 
 ## Local Development
@@ -215,7 +216,7 @@ npm install
 npm --prefix backend install
 ```
 
-Initialize the local environment:
+Initialize the local environment. This bootstraps the database, synchronizes the base Sequelize schema, and runs the Google auth migration:
 
 ```bash
 npm run local:setup

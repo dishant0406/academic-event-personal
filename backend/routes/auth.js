@@ -32,9 +32,29 @@ const userInclude = [
   { association: "bookmarkedEvents", attributes: ["id"], through: { attributes: [] } },
 ];
 
+function isMissingGoogleSchemaError(error) {
+  const messages = [
+    error?.message,
+    error?.parent?.message,
+    error?.parent?.sqlMessage,
+    error?.original?.message,
+    error?.original?.sqlMessage,
+  ];
+
+  return messages.some((message) => typeof message === "string" && message.includes("google_id"));
+}
+
 function handleGoogleAuthError(res, error) {
   if (error instanceof GoogleAuthError) {
     return res.status(error.statusCode).json({ success: false, message: error.message });
+  }
+
+  if (isMissingGoogleSchemaError(error)) {
+    console.error("Google Auth Error: Google auth database migration has not been run.");
+    const message = env.NODE_ENV === "production"
+      ? "Google sign-in failed. Please try again."
+      : "Google auth database migration has not been run. Run: npm --prefix backend run db:migrate:gauth";
+    return res.status(500).json({ success: false, message });
   }
 
   console.error("Google Auth Error:", error.message);

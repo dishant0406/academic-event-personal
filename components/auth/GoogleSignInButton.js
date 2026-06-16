@@ -48,6 +48,9 @@ export default function GoogleSignInButton({ mode = "signin", disabled = false, 
   const nonceRef = useRef("");
   const submittingRef = useRef(false);
   const disabledRef = useRef(disabled);
+  const onAuthenticatedRef = useRef(onAuthenticated);
+  const onProfileRequiredRef = useRef(onProfileRequired);
+  const onErrorRef = useRef(onError);
   const [status, setStatus] = useState("");
   const [submitting, setSubmitting] = useState(false);
 
@@ -55,10 +58,16 @@ export default function GoogleSignInButton({ mode = "signin", disabled = false, 
     disabledRef.current = disabled;
   }, [disabled]);
 
+  useEffect(() => {
+    onAuthenticatedRef.current = onAuthenticated;
+    onProfileRequiredRef.current = onProfileRequired;
+    onErrorRef.current = onError;
+  }, [onAuthenticated, onProfileRequired, onError]);
+
   const reportError = useCallback((message) => {
     setStatus(message);
-    if (onError) onError(message);
-  }, [onError]);
+    if (onErrorRef.current) onErrorRef.current(message);
+  }, []);
 
   const handleCredential = useCallback(async (credentialResponse) => {
     if (disabledRef.current || submittingRef.current) return;
@@ -87,18 +96,18 @@ export default function GoogleSignInButton({ mode = "signin", disabled = false, 
       }
 
       if (data.requiresProfile) {
-        if (onProfileRequired) onProfileRequired(data.googleProfile || null);
+        if (onProfileRequiredRef.current) onProfileRequiredRef.current(data.googleProfile || null);
         return;
       }
 
-      if (onAuthenticated) onAuthenticated(data);
+      if (onAuthenticatedRef.current) onAuthenticatedRef.current(data);
     } catch {
       reportError("Google sign-in failed. Please try again.");
     } finally {
       submittingRef.current = false;
       setSubmitting(false);
     }
-  }, [onAuthenticated, onProfileRequired, reportError]);
+  }, [reportError]);
 
   useEffect(() => {
     let active = true;
@@ -144,10 +153,11 @@ export default function GoogleSignInButton({ mode = "signin", disabled = false, 
       }
     }
 
-    renderButton();
+    const renderTimer = window.setTimeout(renderButton, 0);
 
     return () => {
       active = false;
+      window.clearTimeout(renderTimer);
     };
   }, [handleCredential, mode, reportError]);
 
